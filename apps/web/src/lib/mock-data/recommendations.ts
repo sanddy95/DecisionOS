@@ -1,0 +1,56 @@
+import type { Recommendation } from '@/lib/types'
+
+export const mockRecommendations: Recommendation[] = [
+  {
+    id: 'rec1',
+    title: 'Assign account manager to contact Acme Corp immediately',
+    description: 'Acme Corp shows a risk score of 78 with 2 open escalated tickets and renewal in 19 days. Immediate account manager outreach is required to prevent churn.',
+    evidence: [
+      { text: '2 escalated support tickets unresolved for 25+ days', source: 'support_tickets' },
+      { text: 'Renewal date: July 15, 2026 (19 days away)', source: 'customers' },
+      { text: 'MRR: $12,500 at risk', source: 'revenue' },
+    ],
+    impactEstimate: 'Prevent $12,500 MRR churn risk',
+    impactValue: 12500,
+    priority: 'Critical', urgency: 'Immediate',
+    department: 'Customer Success',
+    suggestedOwner: 'Sarah Chen',
+    confidenceScore: 91,
+    status: 'Pending',
+    createdAt: new Date(Date.now() - 1800000).toISOString(),
+  },
+  {
+    id: 'rec2',
+    title: 'Initiate collections process for 2 overdue accounts',
+    description: 'StartupXYZ and CloudBase Inc have invoices overdue by 45+ days totalling $4,000. Automated reminder escalation recommended.',
+    evidence: [
+      { text: 'StartupXYZ: $2,200 overdue 45 days', source: 'revenue' },
+      { text: 'CloudBase Inc: $1,800 overdue 72 days', source: 'revenue' },
+    ],
+    impactEstimate: 'Recover $4,000 outstanding payments',
+    impactValue: 4000,
+    priority: 'High', urgency: 'This Week',
+    department: 'Finance',
+    suggestedOwner: 'Finance Team',
+    confidenceScore: 96,
+    status: 'Pending',
+    createdAt: new Date(Date.now() - 3600000).toISOString(),
+  },
+  {
+    id: 'rec3',
+    title: 'Accelerate ClearPath AI deal — schedule executive sponsor call',
+    description: 'ClearPath AI is in negotiation with 75% win probability at $120K. Engaging an executive sponsor at this stage increases close rates by an estimated 23%.',
+    evidence: [
+      { text: 'Stage: Negotiation, Value: $120K, Probability: 75%', source: 'sales_pipeline' },
+      { text: 'Expected close: July 10 — 14 days away', source: 'sales_pipeline' },
+    ],
+    impactEstimate: '+$120,000 ARR if closed this month',
+    impactValue: 120000,
+    priority: 'High', urgency: 'This Week',
+    department: 'Sales',
+    suggestedOwner: 'James Wilson',
+    confidenceScore: 84,
+    status: 'Approved',
+    createdAt: new Date(Date.now() - 7200000).toISOString(),
+  },
+]
