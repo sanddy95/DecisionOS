@@ -83,7 +83,7 @@ export function LoginForm() {
       <div className="bg-muted/50 rounded-lg p-3 text-xs text-muted-foreground">
         <p className="font-medium text-foreground mb-1">Demo credentials</p>
         <p>Email: <span className="font-mono">alex@acmedemo.com</span></p>
-        <p>Password: <span className="font-mono">any password</span></p>
+        <p>Password: <span className="font-mono">demo1234</span></p>
       </div>
     </form>
   )

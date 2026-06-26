@@ -19,11 +19,19 @@ export const useAuthStore = create<AuthState>()(
         await new Promise(resolve => setTimeout(resolve, 800))
         if (email === 'alex@acmedemo.com' || email.includes('@')) {
           set({ user: currentUser, isAuthenticated: true })
+          if (typeof document !== 'undefined') {
+            document.cookie = 'decisionos-auth=1; path=/; max-age=604800'
+          }
           return true
         }
         return false
       },
-      logout: () => set({ user: null, isAuthenticated: false }),
+      logout: () => {
+        set({ user: null, isAuthenticated: false })
+        if (typeof document !== 'undefined') {
+          document.cookie = 'decisionos-auth=; path=/; max-age=0'
+        }
+      },
     }),
     { name: 'decisionos-auth' }
   )
