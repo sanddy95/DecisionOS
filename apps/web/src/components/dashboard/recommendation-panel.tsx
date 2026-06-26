@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { mockRecommendations } from '@/lib/mock-data'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ChevronRight, CheckCircle } from 'lucide-react'
+import { ChevronRight, CheckCircle, XCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import Link from 'next/link'
@@ -17,11 +17,17 @@ const priorityColors: Record<string, string> = {
 
 export function RecommendationPanel() {
   const [approved, setApproved] = useState<Set<string>>(new Set())
+  const [rejected, setRejected] = useState<Set<string>>(new Set())
   const pending = mockRecommendations.filter(r => r.status === 'Pending').slice(0, 3)
 
   function handleApprove(id: string, title: string) {
     setApproved(prev => new Set([...prev, id]))
     toast.success(`Approved: ${title}`)
+  }
+
+  function handleReject(id: string, title: string) {
+    setRejected(prev => new Set([...prev, id]))
+    toast.error(`Rejected: ${title}`)
   }
 
   return (
@@ -50,14 +56,22 @@ export function RecommendationPanel() {
                 <span className="flex items-center gap-1 text-sm text-green-600 font-medium">
                   <CheckCircle size={14} /> Approved
                 </span>
+              ) : rejected.has(rec.id) ? (
+                <span className="flex items-center gap-1 text-sm text-red-500 font-medium">
+                  <XCircle size={14} /> Rejected
+                </span>
               ) : (
                 <>
                   <Button size="sm" className="h-7 bg-blue-600 hover:bg-blue-700 text-white text-xs px-3"
                     onClick={() => handleApprove(rec.id, rec.title)}>
                     Approve
                   </Button>
-                  <Button size="sm" variant="outline" className="h-7 text-xs px-3" asChild>
-                    <Link href={`/recommendations`}>
+                  <Button size="sm" variant="outline" className="h-7 text-xs px-3 text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
+                    onClick={() => handleReject(rec.id, rec.title)}>
+                    Reject
+                  </Button>
+                  <Button size="sm" variant="ghost" className="h-7 text-xs px-2 text-muted-foreground ml-auto" asChild>
+                    <Link href="/recommendations">
                       View <ChevronRight size={12} className="ml-0.5" />
                     </Link>
                   </Button>
