@@ -1,7 +1,6 @@
 'use client'
 import { CitationBadge } from './citation-badge'
 import { InlineChart } from './inline-chart'
-import { cn } from '@/lib/utils'
 import type { AIResponse } from '@/lib/mock-ai-responses'
 import { Sparkles, Copy, CheckCircle } from 'lucide-react'
 import { useState } from 'react'

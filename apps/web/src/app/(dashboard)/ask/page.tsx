@@ -69,8 +69,6 @@ export default function AskAIPage() {
     setActiveId(id)
   }
 
-  const lastAssistantMsg = [...active.messages].reverse().find(m => m.role === 'assistant')
-
   return (
     <div className="-m-6 h-[calc(100vh-4rem)] flex">
       <SessionSidebar sessions={sessions} activeId={activeId} onSelect={setActiveId} onNew={handleNew} />
