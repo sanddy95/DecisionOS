@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from 'cmdk'
+import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { useUIStore } from '@/store/ui.store'
 import { LayoutDashboard, MessageSquareText, BarChart3, Lightbulb, Sparkles, Database, Target, GitBranch, Settings } from 'lucide-react'
 
