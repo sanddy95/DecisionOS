@@ -4,7 +4,6 @@ import { NotificationBell } from './notification-bell'
 import { UserMenu } from './user-menu'
 import { Button } from '@/components/ui/button'
 import { Search, Menu } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import { usePathname } from 'next/navigation'
 
 const pageTitles: Record<string, string> = {
