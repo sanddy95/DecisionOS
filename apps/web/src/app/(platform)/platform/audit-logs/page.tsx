@@ -15,13 +15,13 @@ const typeIcons: Record<string, React.ElementType> = {
   admin: Shield, auth: User, sync: Database, config: Settings, ai: Brain, billing: ScrollText, data: Database,
 }
 const typeColors: Record<string, string> = {
-  admin: 'text-violet-400 bg-violet-500/10',
-  auth: 'text-blue-400 bg-blue-500/10',
-  sync: 'text-green-400 bg-green-500/10',
-  config: 'text-amber-400 bg-amber-500/10',
-  ai: 'text-orange-400 bg-orange-500/10',
-  billing: 'text-pink-400 bg-pink-500/10',
-  data: 'text-cyan-400 bg-cyan-500/10',
+  admin: 'text-violet-600 bg-violet-100',
+  auth: 'text-blue-600 bg-blue-100',
+  sync: 'text-green-600 bg-green-100',
+  config: 'text-amber-600 bg-amber-100',
+  ai: 'text-orange-600 bg-orange-100',
+  billing: 'text-pink-600 bg-pink-100',
+  data: 'text-cyan-600 bg-cyan-100',
 }
 
 export default function AuditLogsPage() {
@@ -37,13 +37,13 @@ export default function AuditLogsPage() {
           {auditLogs.map(log => {
             const Icon = typeIcons[log.type] ?? ScrollText
             return (
-              <div key={log.id} className="flex items-center gap-4 px-6 py-4 hover:bg-gray-800/50 transition-colors">
+              <div key={log.id} className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${typeColors[log.type]}`}>
                   <Icon size={14} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-mono text-gray-200">{log.event}</p>
+                    <p className="text-sm font-mono text-gray-800">{log.event}</p>
                   </div>
                   <p className="text-xs text-gray-500">{log.tenant} · {log.actor} · IP: {log.ip}</p>
                 </div>
