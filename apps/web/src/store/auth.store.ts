@@ -6,8 +6,10 @@ import { currentUser } from '@/lib/mock-data'
 interface AuthState {
   user: User | null
   isAuthenticated: boolean
+  _hydrated: boolean
   login: (email: string, password: string) => Promise<boolean>
   logout: () => void
+  setHydrated: () => void
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -15,6 +17,8 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       isAuthenticated: false,
+      _hydrated: false,
+      setHydrated: () => set({ _hydrated: true }),
       login: async (email: string, _password: string) => {
         await new Promise(resolve => setTimeout(resolve, 800))
         if (email === 'alex@acmedemo.com' || email.includes('@')) {
@@ -33,6 +37,9 @@ export const useAuthStore = create<AuthState>()(
         }
       },
     }),
-    { name: 'decisionos-auth' }
+    {
+      name: 'decisionos-auth',
+      onRehydrateStorage: () => (state) => { state?.setHydrated() },
+    }
   )
 )
