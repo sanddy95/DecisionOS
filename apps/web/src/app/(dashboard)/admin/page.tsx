@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { mockUsers, subscriptionPlans, mockTenants } from '@/lib/mock-data'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -9,12 +8,23 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { formatDate, getInitials } from '@/lib/utils'
+import { formatDate, getInitials, cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import {
-  Shield, Users, Database, Key, ClipboardList, Settings, ExternalLink,
-  Info, Brain, CreditCard, Check, CheckCircle2, User, LogIn, Upload, Search,
+  Shield, Users, Database, Cpu, ClipboardList, Settings, ExternalLink,
+  Info, Brain, CreditCard, CheckCircle2, User, LogIn, Upload, Search,
 } from 'lucide-react'
+
+type Section = 'users' | 'roles' | 'llm' | 'subscription' | 'audit' | 'settings'
+
+const sections: { key: Section; label: string; icon: React.ElementType }[] = [
+  { key: 'users', label: 'Users', icon: Users },
+  { key: 'roles', label: 'Roles', icon: Shield },
+  { key: 'llm', label: 'LLM Settings', icon: Cpu },
+  { key: 'subscription', label: 'Subscription', icon: CreditCard },
+  { key: 'audit', label: 'Audit Logs', icon: ClipboardList },
+  { key: 'settings', label: 'Settings', icon: Settings },
+]
 
 const roleColors: Record<string, string> = {
   'Super Admin': 'bg-red-100 text-red-700',
@@ -48,6 +58,7 @@ const acme = mockTenants.find(t => t.id === 't1')!
 const tenantPlan = subscriptionPlans.find(p => p.name === 'Enterprise')!
 
 export default function AdminPage() {
+  const [activeSection, setActiveSection] = useState<Section>('users')
   const [users, setUsers] = useState(mockUsers.map((u, i) => ({ ...u, lastActive: userLastActive[i] ?? '1 day ago' })))
   const [llmModel, setLlmModel] = useState('gpt-4o')
   const [temperature, setTemperature] = useState('0.3')
@@ -120,19 +131,31 @@ export default function AdminPage() {
         ))}
       </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="users">
-        <TabsList className="flex">
-          <TabsTrigger value="users" className="gap-1.5"><Users size={14} />Users</TabsTrigger>
-          <TabsTrigger value="roles" className="gap-1.5"><Shield size={14} />Roles</TabsTrigger>
-          <TabsTrigger value="llm" className="gap-1.5"><Key size={14} />LLM</TabsTrigger>
-          <TabsTrigger value="subscription" className="gap-1.5"><CreditCard size={14} />Subscription</TabsTrigger>
-          <TabsTrigger value="audit" className="gap-1.5"><ClipboardList size={14} />Audit Logs</TabsTrigger>
-          <TabsTrigger value="settings" className="gap-1.5"><Settings size={14} />Settings</TabsTrigger>
-        </TabsList>
+      {/* Inner sidebar layout */}
+      <div className="flex gap-8">
+        {/* Left nav */}
+        <aside className="w-48 shrink-0">
+          <nav className="space-y-0.5 sticky top-4">
+            {sections.map(s => (
+              <button key={s.key} onClick={() => setActiveSection(s.key)}
+                className={cn(
+                  'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-left transition-colors',
+                  activeSection === s.key
+                    ? 'bg-blue-50 text-blue-700 font-semibold'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                )}>
+                <s.icon size={15} className="shrink-0" />
+                {s.label}
+              </button>
+            ))}
+          </nav>
+        </aside>
 
-        {/* Users Tab */}
-        <TabsContent value="users" className="mt-6 space-y-4">
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+
+        {/* Users */}
+        {activeSection === 'users' && <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Input placeholder="Search users..." className="max-w-xs" />
@@ -184,10 +207,10 @@ export default function AdminPage() {
               </tbody>
             </table>
           </div>
-        </TabsContent>
+        </div>}
 
-        {/* Roles Tab */}
-        <TabsContent value="roles" className="mt-6">
+        {/* Roles */}
+        {activeSection === 'roles' && <div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Object.entries(roleColors).map(([role, color]) => (
               <div key={role} className="rounded-xl border bg-card p-4">
@@ -206,10 +229,10 @@ export default function AdminPage() {
               </div>
             ))}
           </div>
-        </TabsContent>
+        </div>}
 
-        {/* LLM Settings Tab */}
-        <TabsContent value="llm" className="mt-6">
+        {/* LLM Settings */}
+        {activeSection === 'llm' && <div>
           <div className="max-w-lg space-y-6">
             <div className="flex items-start gap-3 p-3 rounded-lg bg-blue-50 border border-blue-200">
               <Info size={15} className="text-blue-600 mt-0.5 shrink-0" />
@@ -257,10 +280,10 @@ export default function AdminPage() {
               <Button className="bg-blue-600 hover:bg-blue-700 text-white w-full" onClick={() => toast.success('LLM settings saved')}>Save Settings</Button>
             </div>
           </div>
-        </TabsContent>
+        </div>}
 
-        {/* Subscription Tab */}
-        <TabsContent value="subscription" className="mt-6">
+        {/* Subscription */}
+        {activeSection === 'subscription' && <div>
           <div className="grid grid-cols-3 gap-6">
             {/* Left: current plan + usage */}
             <div className="col-span-2 space-y-4">
@@ -359,10 +382,10 @@ export default function AdminPage() {
               </div>
             </div>
           </div>
-        </TabsContent>
+        </div>}
 
-        {/* Audit Logs Tab */}
-        <TabsContent value="audit" className="mt-6 space-y-4">
+        {/* Audit Logs */}
+        {activeSection === 'audit' && <div className="space-y-4">
           <div className="flex gap-3">
             <Input placeholder="Search audit logs..." className="max-w-xs" />
             <Button variant="outline" size="sm">Export CSV</Button>
@@ -388,10 +411,10 @@ export default function AdminPage() {
               )
             })}
           </div>
-        </TabsContent>
+        </div>}
 
-        {/* Settings Tab */}
-        <TabsContent value="settings" className="mt-6">
+        {/* Settings */}
+        {activeSection === 'settings' && <div>
           <div className="max-w-lg space-y-4">
             <div className="rounded-xl border bg-card p-6 space-y-4">
               <h3 className="font-semibold">Organization Settings</h3>
@@ -422,8 +445,10 @@ export default function AdminPage() {
               <Button className="bg-blue-600 hover:bg-blue-700 text-white w-full" onClick={() => toast.success('Settings saved')}>Save Changes</Button>
             </div>
           </div>
-        </TabsContent>
-      </Tabs>
+        </div>}
+
+        </div>{/* end content */}
+      </div>{/* end inner sidebar layout */}
     </div>
   )
 }
