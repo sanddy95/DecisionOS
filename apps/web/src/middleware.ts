@@ -8,6 +8,11 @@ export function middleware(request: NextRequest) {
   const isPublic = publicPaths.some(p => pathname.startsWith(p))
   const authCookie = request.cookies.get('decisionos-auth')
 
+  // Platform admin bypasses tenant auth
+  if (pathname.startsWith('/platform')) {
+    return NextResponse.next()
+  }
+
   if (!isPublic && !authCookie) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
