@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { formatDate, getInitials, cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import {
-  Shield, Users, Database, Cpu, ClipboardList, Settings, ExternalLink,
+  Shield, Users, Database, Cpu, ClipboardList, Settings,
   Info, Brain, CreditCard, CheckCircle2, User, LogIn, Upload, Search,
 } from 'lucide-react'
 
@@ -103,10 +103,6 @@ export default function AdminPage() {
           <h2 className="text-lg font-semibold">Admin Console</h2>
           <p className="text-sm text-muted-foreground">Manage users, roles, LLM settings, and organization configuration</p>
         </div>
-        <a href="/platform" target="_blank"
-          className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg border border-violet-200 text-violet-600 hover:bg-violet-50 transition-colors">
-          <ExternalLink size={12} /> Platform Admin Panel
-        </a>
       </div>
 
       {/* Stat cards */}
