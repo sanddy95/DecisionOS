@@ -4,3 +4,7 @@ dist
 .turbo
 .cache
 *.tsbuildinfo
+
+# Dev scaffolding
+.superpowers/sdd/*.diff
+.superpowers/sdd/task-*-report.md
