@@ -24,7 +24,7 @@ We are **not** using Supabase. All services are self-owned and self-managed:
 
 | Layer | Choice | Reason |
 |---|---|---|
-| **Database** | PostgreSQL on **Neon** (serverless) or **Railway** | Real Postgres, no vendor lock-in, full SQL control |
+| **Database** | PostgreSQL on **Neon** (serverless) or **Railway** — **schema-per-tenant** | Real Postgres, strong tenant isolation, easy offboarding, no `tenant_id` column pollution |
 | **Auth** | **Auth.js v5** (NextAuth) — Credentials + bcrypt + JWT | Industry standard for Next.js, no third-party auth vendor |
 | **File Storage** | **Cloudflare R2** | S3-compatible, $0.015/GB, no egress fees |
 | **Real-time** | **Server-Sent Events** (built into Next.js) | No extra service, sufficient for notifications + AI streaming |
@@ -85,8 +85,16 @@ We are **not** using Supabase. All services are self-owned and self-managed:
 
 **Auth flow:**
 - Login → Auth.js Credentials → bcrypt verify → JWT issued as httpOnly cookie (7-day expiry)
-- Middleware reads JWT → extracts `userId` + `tenantId` → every API route and DB query is scoped automatically
-- Tenant isolation: separate schema per tenant OR `tenant_id` column with enforced query filter (decided in schema design)
+- Middleware reads JWT → extracts `userId` + `tenantSlug` → sets `search_path = tenant_{slug}` on every DB connection
+- Tenant isolation: **schema-per-tenant** (e.g. `acme`, `globaltech`) — each tenant is a completely separate Postgres schema with identical table structure
+
+**Schema-per-tenant rationale:**
+- Strong data isolation enforced at DB level — no risk of cross-tenant data leakage via missing WHERE clause
+- Easy tenant offboarding: `DROP SCHEMA tenant_slug CASCADE`
+- Easy per-tenant backup/restore
+- Tenant-specific schema migrations possible
+- Works well with Neon's branching feature (branch = tenant schema snapshot)
+- Tradeoff: connection pooling needs `search_path` set per connection (handled by middleware); cross-tenant analytics done in a separate `platform` schema
 
 ---
 
@@ -381,7 +389,7 @@ The tenant chooses which provider to use. Costs are billed directly to the tenan
 |---|---|
 | Can you share the Custom ERP API documentation (base URL, auth type, key endpoints)? | Needed to scope the ERP connector accurately; missing docs = 1–2 day risk buffer |
 | Which Zoho plan are you on? (Free = 100 API req/min; Professional+ = higher limits) | Determines sync frequency we can offer without hitting rate limits |
-| How many tenant organizations do you expect at launch? | Informs whether we use `tenant_id` column approach or separate schemas per tenant |
+| How many tenant organizations do you expect at launch? | We are using schema-per-tenant (confirmed). This informs connection pool sizing on Neon. |
 | Do tenants bring their own LLM API keys, or does DecisionOS hold one shared key? | Billing model decision — shared key = you absorb LLM cost; per-tenant keys = tenants pay directly |
 
 ---
