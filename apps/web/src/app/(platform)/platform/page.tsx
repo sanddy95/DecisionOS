@@ -3,17 +3,17 @@ import { Badge } from '@/components/ui/badge'
 import { Building2, Users, DollarSign, Brain, TrendingUp, AlertCircle } from 'lucide-react'
 
 const statusColors: Record<string, string> = {
-  Active: 'bg-green-500/20 text-green-400',
-  Trial: 'bg-amber-500/20 text-amber-400',
-  Suspended: 'bg-red-500/20 text-red-400',
-  Churned: 'bg-gray-500/20 text-gray-400',
+  Active: 'bg-green-100 text-green-700',
+  Trial: 'bg-amber-100 text-amber-700',
+  Suspended: 'bg-red-100 text-red-700',
+  Churned: 'bg-gray-100 text-gray-600',
 }
 
 const planColors: Record<string, string> = {
-  Enterprise: 'bg-violet-500/20 text-violet-300',
-  Professional: 'bg-blue-500/20 text-blue-300',
-  Starter: 'bg-green-500/20 text-green-300',
-  Trial: 'bg-amber-500/20 text-amber-300',
+  Enterprise: 'bg-violet-100 text-violet-700',
+  Professional: 'bg-blue-100 text-blue-700',
+  Starter: 'bg-green-100 text-green-700',
+  Trial: 'bg-amber-100 text-amber-700',
 }
 
 export default function PlatformPage() {
@@ -28,16 +28,16 @@ export default function PlatformPage() {
     <div className="p-8 space-y-8">
       <div>
         <h1 className="text-2xl font-bold">Platform Overview</h1>
-        <p className="text-gray-400 mt-1 text-sm">Real-time health across all tenant workspaces</p>
+        <p className="text-gray-500 mt-1 text-sm">Real-time health across all tenant workspaces</p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4">
         {stats.map(s => (
-          <div key={s.label} className="bg-gray-900 rounded-xl border border-gray-800 p-5">
+          <div key={s.label} className="bg-white rounded-xl border border-gray-200 p-5">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">{s.label}</p>
+                <p className="text-xs text-gray-400 uppercase tracking-wider font-medium">{s.label}</p>
                 <p className="text-2xl font-bold mt-1">{s.value}</p>
                 <p className="text-xs text-gray-500 mt-1">{s.sub}</p>
               </div>
@@ -48,14 +48,14 @@ export default function PlatformPage() {
       </div>
 
       {/* Tenant health table */}
-      <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800">
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <h2 className="font-semibold text-sm">Tenant Health</h2>
           <span className="text-xs text-gray-500">{mockTenants.length} total</span>
         </div>
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-800">
+            <tr className="border-b border-gray-200">
               {['Tenant', 'Plan', 'Status', 'Users', 'Data Sources', 'AI Queries/mo', 'MRR'].map(h => (
                 <th key={h} className="text-left px-6 py-3 text-xs text-gray-500 font-medium uppercase tracking-wider">{h}</th>
               ))}
@@ -63,7 +63,7 @@ export default function PlatformPage() {
           </thead>
           <tbody className="divide-y divide-gray-800">
             {mockTenants.map(t => (
-              <tr key={t.id} className="hover:bg-gray-800/50 transition-colors">
+              <tr key={t.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4">
                   <a href={`/platform/tenants/${t.id}`} className="font-medium hover:text-violet-400 transition-colors">{t.name}</a>
                   <p className="text-xs text-gray-500">{t.domain}</p>
@@ -77,10 +77,10 @@ export default function PlatformPage() {
                     {t.status}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-gray-300">{t.users}</td>
-                <td className="px-6 py-4 text-gray-300">{t.dataSources}</td>
-                <td className="px-6 py-4 text-gray-300">{t.aiQueriesMonth.toLocaleString()}</td>
-                <td className="px-6 py-4 text-gray-300">{t.mrr > 0 ? `$${t.mrr.toLocaleString()}` : '—'}</td>
+                <td className="px-6 py-4 text-gray-700">{t.users}</td>
+                <td className="px-6 py-4 text-gray-700">{t.dataSources}</td>
+                <td className="px-6 py-4 text-gray-700">{t.aiQueriesMonth.toLocaleString()}</td>
+                <td className="px-6 py-4 text-gray-700">{t.mrr > 0 ? `$${t.mrr.toLocaleString()}` : '—'}</td>
               </tr>
             ))}
           </tbody>

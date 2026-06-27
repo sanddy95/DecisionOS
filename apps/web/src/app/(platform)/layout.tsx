@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: 'Platform Admin — DecisionOS' }
 
 export default function PlatformLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-screen bg-gray-950 text-white">
+    <div className="flex h-screen bg-gray-50 text-gray-900">
       <PlatformNav />
       <main className="flex-1 overflow-auto">
         {children}

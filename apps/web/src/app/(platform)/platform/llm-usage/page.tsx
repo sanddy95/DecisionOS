@@ -27,7 +27,7 @@ export default function LLMUsagePage() {
     <div className="p-8 space-y-6">
       <div>
         <h1 className="text-2xl font-bold">LLM Usage</h1>
-        <p className="text-sm text-gray-400 mt-1">Cross-tenant AI query usage and cost estimates</p>
+        <p className="text-sm text-gray-500 mt-1">Cross-tenant AI query usage and cost estimates</p>
       </div>
 
       {/* Summary */}
@@ -37,10 +37,10 @@ export default function LLMUsagePage() {
           { label: 'Estimated Cost / mo', value: `$${totalCost.toFixed(2)}`, sub: 'based on provider rates', icon: TrendingUp },
           { label: 'Active Providers', value: new Set(mockTenants.map(t => t.llmProvider)).size.toString(), sub: 'unique LLM providers in use', icon: Brain },
         ].map(s => (
-          <div key={s.label} className="bg-gray-900 rounded-xl border border-gray-800 p-5">
+          <div key={s.label} className="bg-white rounded-xl border border-gray-200 p-5">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">{s.label}</p>
+                <p className="text-xs text-gray-400 uppercase tracking-wider font-medium">{s.label}</p>
                 <p className="text-2xl font-bold mt-1">{s.value}</p>
                 <p className="text-xs text-gray-500 mt-1">{s.sub}</p>
               </div>
@@ -51,13 +51,13 @@ export default function LLMUsagePage() {
       </div>
 
       {/* Per-tenant table */}
-      <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-800">
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200">
           <h2 className="font-semibold text-sm">Usage by Tenant</h2>
         </div>
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-800">
+            <tr className="border-b border-gray-200">
               {['Tenant', 'Plan', 'LLM Provider', 'Queries / mo', 'Est. Cost', 'Avg / Day'].map(h => (
                 <th key={h} className="text-left px-6 py-3 text-xs text-gray-500 font-medium uppercase tracking-wider">{h}</th>
               ))}
@@ -69,7 +69,7 @@ export default function LLMUsagePage() {
               return (
                 <tr key={t.id} className="hover:bg-gray-800/50 transition-colors">
                   <td className="px-6 py-4 font-medium">{t.name}</td>
-                  <td className="px-6 py-4 text-gray-400">{t.plan}</td>
+                  <td className="px-6 py-4 text-gray-500">{t.plan}</td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${providerColors[t.llmProvider] ?? 'bg-gray-500/20 text-gray-300'}`}>
                       {t.llmProvider}
@@ -77,7 +77,7 @@ export default function LLMUsagePage() {
                   </td>
                   <td className="px-6 py-4 text-gray-300">{t.aiQueriesMonth.toLocaleString()}</td>
                   <td className="px-6 py-4 text-gray-300">${cost.toFixed(2)}</td>
-                  <td className="px-6 py-4 text-gray-400">{Math.round(t.aiQueriesMonth / 30)}</td>
+                  <td className="px-6 py-4 text-gray-500">{Math.round(t.aiQueriesMonth / 30)}</td>
                 </tr>
               )
             })}
@@ -87,7 +87,7 @@ export default function LLMUsagePage() {
               <td className="px-6 py-3 font-semibold text-gray-300" colSpan={3}>Total</td>
               <td className="px-6 py-3 font-semibold">{totalQueries.toLocaleString()}</td>
               <td className="px-6 py-3 font-semibold">${totalCost.toFixed(2)}</td>
-              <td className="px-6 py-3 text-gray-400">{Math.round(totalQueries / 30)}</td>
+              <td className="px-6 py-3 text-gray-500">{Math.round(totalQueries / 30)}</td>
             </tr>
           </tfoot>
         </table>
