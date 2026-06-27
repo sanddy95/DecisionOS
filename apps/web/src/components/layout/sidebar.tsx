@@ -3,13 +3,10 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/store/ui.store'
-import { useState } from 'react'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { mockTenants } from '@/lib/mock-data'
 import {
   LayoutDashboard, MessageSquareText, BarChart3, Lightbulb,
   Sparkles, Database, Target, GitBranch, Settings, ChevronLeft,
-  ChevronRight, TrendingUp, ChevronsUpDown, Check, Building2,
+  ChevronRight, TrendingUp,
 } from 'lucide-react'
 
 const navItems = [
@@ -23,14 +20,8 @@ const navItems = [
   { label: 'Workflows', href: '/workflows', icon: GitBranch },
 ]
 
-const switcherTenants = mockTenants.filter(t => t.status !== 'Suspended' && t.status !== 'Churned').slice(0, 4)
-
-const planColors: Record<string, string> = {
-  Enterprise: 'bg-violet-600',
-  Professional: 'bg-blue-600',
-  Starter: 'bg-green-600',
-  Trial: 'bg-amber-500',
-}
+// In production this comes from the JWT/session — hardcoded for demo
+const CURRENT_ORG = { name: 'Acme Corp', plan: 'Enterprise' }
 
 function getInitials(name: string) {
   return name.split(' ').map(w => w[0] ?? '').join('').slice(0, 2).toUpperCase()
@@ -39,8 +30,6 @@ function getInitials(name: string) {
 export function Sidebar() {
   const pathname = usePathname()
   const { sidebarOpen, toggleSidebar } = useUIStore()
-  const [activeTenant, setActiveTenant] = useState(switcherTenants[0] ?? mockTenants[0]!)
-  const [open, setOpen] = useState(false)
 
   return (
     <aside className={cn(
@@ -55,49 +44,21 @@ export function Sidebar() {
         {sidebarOpen && <span className="font-bold text-lg tracking-tight">DecisionOS</span>}
       </div>
 
-      {/* Workspace switcher */}
+      {/* Current org — static, no switcher (each org has its own isolated workspace) */}
       <div className={cn('px-2 py-3 border-b border-white/10 shrink-0', !sidebarOpen && 'flex justify-center')}>
         {sidebarOpen ? (
-          <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-              <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-colors text-left">
-                <div className={cn('w-6 h-6 rounded flex items-center justify-center text-white text-[10px] font-bold shrink-0', planColors[activeTenant.plan] ?? 'bg-blue-600')}>
-                  {getInitials(activeTenant.name)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold truncate">{activeTenant.name}</p>
-                  <p className="text-[10px] text-white/50">{activeTenant.plan}</p>
-                </div>
-                <ChevronsUpDown size={12} className="text-white/50 shrink-0" />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-56 p-1" align="start" side="right">
-              <p className="text-[10px] text-muted-foreground px-2 py-1.5 font-medium uppercase tracking-wider">Workspaces</p>
-              {switcherTenants.map(t => (
-                <button key={t.id}
-                  onClick={() => { setActiveTenant(t); setOpen(false) }}
-                  className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted transition-colors text-left">
-                  <div className={cn('w-6 h-6 rounded flex items-center justify-center text-white text-[10px] font-bold shrink-0', planColors[t.plan] ?? 'bg-blue-600')}>
-                    {getInitials(t.name)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{t.name}</p>
-                    <p className="text-xs text-muted-foreground">{t.plan}</p>
-                  </div>
-                  {activeTenant.id === t.id && <Check size={13} className="text-blue-600 shrink-0" />}
-                </button>
-              ))}
-              <div className="border-t mt-1 pt-1">
-                <Link href="/platform/tenants"
-                  className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted text-xs text-muted-foreground transition-colors">
-                  <Building2 size={13} /> All workspaces
-                </Link>
-              </div>
-            </PopoverContent>
-          </Popover>
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10">
+            <div className="w-6 h-6 rounded bg-violet-600 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
+              {getInitials(CURRENT_ORG.name)}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold truncate">{CURRENT_ORG.name}</p>
+              <p className="text-[10px] text-white/50">{CURRENT_ORG.plan}</p>
+            </div>
+          </div>
         ) : (
-          <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center text-white text-[10px] font-bold shrink-0', planColors[activeTenant.plan] ?? 'bg-blue-600')}>
-            {getInitials(activeTenant.name)}
+          <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
+            {getInitials(CURRENT_ORG.name)}
           </div>
         )}
       </div>
