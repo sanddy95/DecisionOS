@@ -13,8 +13,9 @@
 |---|---|---|
 | **Data sources** | Zoho CRM + Custom ERP (both integration + file upload) | Zoho OAuth connector + generic ERP REST/webhook adapter |
 | **Connector priority** | Zoho is must-have for launch; others post-launch | Phase 3 focuses on Zoho first |
-| **Multi-tenancy** | Yes — each client company gets isolated workspace | Full multi-tenant from Phase 1; `tenant_id` on every row |
-| **LLM preference** | Users can switch provider + add new connections | Multi-provider LLM router in Admin Console; API keys per tenant |
+| **Multi-tenancy** | Yes — each client company gets isolated workspace | Schema-per-tenant from Phase 1 |
+| **LLM configuration** | Configurable by tenant admin, gated by subscription plan | LLM Settings in tenant Admin Console; available providers depend on active plan |
+| **Subscription model** | Each tenant subscribes to a plan; plans configured by Platform Admin | Subscription plans enforced at API level; Platform Admin panel manages plan definitions |
 
 ---
 
@@ -162,19 +163,35 @@ We are **not** using Supabase. All services are self-owned and self-managed:
 
 **Phase total:** ~18.5 days AI · ~46 days traditional
 
-**Multi-provider LLM switcher detail:**
-- Each tenant stores their own API keys (encrypted) for each provider
-- Admin Console → LLM Settings → add provider → paste API key → select default model → Test connection
-- Users can override the default per-session from the Ask AI page
-- Provider support at launch: **Anthropic Claude** (claude-sonnet-4-6, claude-haiku-4-5), **OpenAI** (gpt-4o, gpt-4o-mini), **Google Gemini** (gemini-1.5-pro)
-- Post-launch: Ollama (self-hosted open-source models)
-- New provider = add a new adapter class (~1 day dev effort per provider)
+**Subscription-gated LLM model:**
+
+Each tenant's subscription plan controls which LLM providers are available to their admins:
+
+| Plan | Price/month | Users | Data Sources | AI Queries/mo | Allowed LLM Providers |
+|---|---|---|---|---|---|
+| **Trial** | $0 | 3 | 1 | 50 | GPT-4o-mini only |
+| **Starter** | $199 | 10 | 3 | 300 | GPT-4o + Claude Haiku |
+| **Professional** | $599 | 25 | 6 | 1,500 | Claude Sonnet + GPT-4o + Gemini Pro |
+| **Enterprise** | $1,199 | Unlimited | Unlimited | Unlimited | All providers + custom models |
+
+**How it works:**
+- Platform Admin defines plans and their allowed providers in the Platform Admin panel
+- Tenant Admin subscribes to a plan (or Platform Admin assigns it)
+- Tenant Admin Console → LLM Settings shows only the providers their plan allows
+- API enforces plan limits: query count, user count, data source count checked on every request
+- Platform Admin can change a tenant's plan at any time (instant effect)
+- New provider = add adapter class (~1 day) + Platform Admin adds it to relevant plans
+
+**Platform Admin plan management:**
+- Create / edit / archive plans from Platform Admin → Settings → Subscription Plans
+- Configure per plan: price, limits, allowed LLM providers (multi-select), feature flags
+- View per-tenant plan + usage from Platform Admin → Tenants → [tenant] → Subscription tab
 
 ---
 
-### Phase 5 — Frontend → Backend Integration
+### Phase 5 — Frontend → Backend Integration + Subscription Enforcement
 
-**Scope:** Replace all mock fixtures with live API calls
+**Scope:** Replace all mock fixtures with live API calls; enforce subscription plan limits at API + UI level
 
 | Task | AI Estimate | Traditional |
 |---|---|---|
@@ -183,9 +200,11 @@ We are **not** using Supabase. All services are self-owned and self-managed:
 | Real dashboard charts (live data → Recharts via API) | 1 day | 2 days |
 | Notification system (SSE endpoint → existing notification bell) | 1 day | 2 days |
 | Workflow / task CRUD persistence | 1 day | 2 days |
-| Admin Console — real user management, role assignment, LLM config per tenant | 1 day | 2 days |
+| **Subscription enforcement middleware** — check plan limits (queries, users, data sources) on every relevant API route; return 402 with upgrade prompt when limit hit | 1.5 days | 4 days |
+| **Tenant Admin Console** — LLM Settings tab shows only plan-allowed providers; plan usage meters (queries used vs limit); upgrade CTA | 1 day | 2 days |
+| **Platform Admin panel** — plan management (CRUD), per-tenant plan assignment, usage dashboard across all tenants | 1 day | 3 days |
 
-**Phase total:** ~8 days AI · ~16 days traditional
+**Phase total:** ~10.5 days AI · ~23 days traditional
 
 ---
 
@@ -228,19 +247,19 @@ We are **not** using Supabase. All services are self-owned and self-managed:
 | Phase | AI-Assisted | Traditional |
 |---|---|---|
 | ✅ 0 — Frontend Prototype | Complete | — |
-| 1 — Backend Foundation (Postgres + Auth.js) | 7.5 days | 20 days |
+| 1 — Backend Foundation (Postgres + Auth.js + schema-per-tenant) | 7.5 days | 20 days |
 | 2 — File Ingestion (R2 + parser) | 6.5 days | 15 days |
 | 3 — Connectors (Zoho + Custom ERP + PostgreSQL) | 13 days | 28 days |
 | 4 — AI/LLM Engine (pgvector + RAG + multi-provider) | 18.5 days | 46 days |
-| 5 — Frontend Integration | 8 days | 16 days |
+| 5 — Frontend Integration + Subscription Enforcement | 10.5 days | 23 days |
 | 6 — Production Hardening | 5 days | 14 days |
 | 7 — QA & Deployment | 6.5 days | 15 days |
-| **TOTAL** | **~65 days (~13 weeks)** | **~154 days (~31 weeks)** |
+| **TOTAL** | **~68 days (~14 weeks)** | **~161 days (~32 weeks)** |
 
-> The multi-provider LLM switcher adds ~3.5 days vs a single-provider setup — worthwhile given client confirmed it as a requirement.
-> Post-launch connectors (Google Sheets, Salesforce) add ~5 days in a future sprint.
+> Subscription enforcement (plan limits + LLM gating + Platform Admin plan management) adds ~2.5 days to Phase 5.
+> Post-launch: Stripe self-serve billing (~3 days), Google Sheets + Salesforce connectors (~5 days).
 
-**Rounding to 12 weeks delivery:** Phases 1–2 can overlap (file ingestion doesn't block auth schema). Running them in parallel with two AI subagent streams saves ~4–5 days, bringing wall-clock delivery to **~12 weeks**.
+**Parallelism brings wall-clock to ~12 weeks:** Phases 1+2 can run concurrently (file ingestion schema doesn't block auth schema). Phase 3 connector work can be split across parallel agents. Running overlapping phases with AI subagent streams saves ~6–8 days wall-clock, delivering in **~12 weeks**.
 
 ---
 
@@ -318,13 +337,26 @@ The tenant chooses which provider to use. Costs are billed directly to the tenan
 
 ---
 
+### Subscription Billing (Optional — Phase 2)
+
+For MVP, plan assignment is manual (Platform Admin sets plan per tenant). For self-serve billing:
+
+| Service | Purpose | Cost |
+|---|---|---|
+| **Stripe** | Subscription billing, plan upgrades, invoices | 0.5% + payment processing |
+| **Stripe Billing Portal** | Self-serve plan upgrade/downgrade for tenants | Included with Stripe |
+
+> Stripe integration is post-MVP. At launch, Platform Admin manually assigns plans. Stripe can be added in ~3 days when needed.
+
+---
+
 ### Optional Additions
 
 | Service | Purpose | Cost |
 |---|---|---|
-| **Resend** | Transactional email (password reset, sync alerts, invites) | Free up to 3,000/month |
+| **Resend** | Transactional email (plan upgrade confirmations, query limit warnings, invites) | Free up to 3,000/month |
 | **Cloudflare** | CDN + WAF + DDoS protection | Free tier sufficient |
-| **PostHog** | Product analytics (per-tenant feature usage) | Free up to 1M events/month |
+| **PostHog** | Product analytics (per-tenant feature usage, plan conversion tracking) | Free up to 1M events/month |
 
 ---
 
