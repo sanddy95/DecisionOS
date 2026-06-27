@@ -20,6 +20,9 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <p className="text-center text-navy-300 text-xs mt-6">
           © 2026 DecisionOS · Enterprise Decision Intelligence Platform
         </p>
+        <p className="text-center text-navy-400 text-xs mt-2">
+          Platform admin? <a href="/platform/login" className="text-blue-400 hover:underline">Sign in here →</a>
+        </p>
       </div>
     </div>
   )

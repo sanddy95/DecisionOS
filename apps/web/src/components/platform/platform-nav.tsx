@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
-  LayoutDashboard, Building2, Cpu, ScrollText, Settings, Shield, ArrowLeft,
+  LayoutDashboard, Building2, Cpu, ScrollText, Settings, Shield, ArrowLeft, LogOut,
 } from 'lucide-react'
 
 const navItems = [
@@ -48,12 +48,20 @@ export function PlatformNav() {
         })}
       </nav>
 
-      {/* Back to app */}
-      <div className="border-t border-violet-800/50 py-3 px-2">
+      {/* Bottom actions */}
+      <div className="border-t border-violet-800/50 py-3 px-2 space-y-0.5">
         <Link href="/"
           className="flex items-center gap-2 h-9 px-3 rounded-lg text-sm text-violet-300 hover:text-white hover:bg-violet-800/50 transition-colors">
           <ArrowLeft size={14} /> Back to App
         </Link>
+        <button
+          onClick={() => {
+            document.cookie = 'decisionos-platform-auth=; path=/; max-age=0'
+            window.location.href = '/platform/login'
+          }}
+          className="w-full flex items-center gap-2 h-9 px-3 rounded-lg text-sm text-violet-300 hover:text-white hover:bg-violet-800/50 transition-colors">
+          <LogOut size={14} /> Sign Out
+        </button>
       </div>
     </aside>
   )
