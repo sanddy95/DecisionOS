@@ -28,7 +28,7 @@ We are **not** using Supabase. All services are self-owned and self-managed:
 
 | Item | Detail |
 |---|---|
-| Total development | ~12 weeks AI-assisted (full scope) |
+| Total development | **~12 weeks** AI-assisted (full scope) |
 | MVP (3-week sprint) | Backend + 1 connector + LLM working end-to-end |
 | Traditional equivalent | ~26–28 weeks |
 | AI speed advantage | ~45–50% faster |
@@ -63,14 +63,14 @@ We are **not** using Supabase. All services are self-owned and self-managed:
 | Task | AI Estimate | Traditional |
 |---|---|---|
 | PostgreSQL schema design (tenants, users, sessions, data_sources, kpis, insights, recommendations, tasks, audit_logs) | 2 days | 4 days |
-| Neon/Railway Postgres setup + migrations (Drizzle ORM) | 1 day | 2 days |
-| **Auth.js v5** setup — Credentials provider, bcrypt password hashing, JWT sessions | 1.5 days | 4 days |
-| Session middleware (JWT validation on every API route) | 1 day | 2 days |
+| Neon/Railway Postgres setup + migrations (Drizzle ORM) | 0.5 day | 2 days |
+| **Auth.js v5** setup — Credentials provider, bcrypt password hashing, JWT sessions | 1 day | 4 days |
+| Session middleware (JWT validation on every API route) | 0.5 day | 2 days |
 | Multi-tenant middleware (tenant_id scoping on every DB query) | 2 days | 4 days |
 | Next.js API Routes scaffolding (versioned, typed with Zod) | 1 day | 3 days |
 | Zustand auth store → real JWT session (replace mock cookie) | 0.5 day | 1 day |
 
-**Phase total:** ~9 days AI · ~20 days traditional
+**Phase total:** ~7.5 days AI · ~20 days traditional
 
 **Auth flow detail:**
 - User logs in → Auth.js Credentials provider → bcrypt verify password → issue JWT (httpOnly cookie, 7-day expiry)
@@ -121,7 +121,7 @@ We are **not** using Supabase. All services are self-owned and self-managed:
 
 | Task | AI Estimate | Traditional |
 |---|---|---|
-| pgvector extension on Postgres (no new service) — embedding schema | 1 day | 3 days |
+| pgvector extension on same Postgres (no new service) — embedding schema | 0.5 day | 2 days |
 | Embedding pipeline — chunk ingested rows → `text-embedding-3-small` (OpenAI) → store vectors | 2 days | 5 days |
 | RAG retrieval — natural language query → embed → cosine similarity search → context assembly | 2 days | 6 days |
 | SQL generation — LLM converts query intent to SQL, executes against tenant's data, returns structured result | 2 days | 5 days |
@@ -131,7 +131,7 @@ We are **not** using Supabase. All services are self-owned and self-managed:
 | AI Executive Summary generator — scheduled nightly per tenant, stored in DB | 1 day | 3 days |
 | Insight + Recommendation auto-generation (LLM analysis + threshold rule engine) | 2 days | 5 days |
 
-**Phase total:** ~15 days AI · ~38 days traditional
+**Phase total:** ~14.5 days AI · ~37 days traditional
 
 ---
 
@@ -162,10 +162,10 @@ We are **not** using Supabase. All services are self-owned and self-managed:
 | Error boundaries + structured logging (Sentry + Pino logger) | 1 day | 2 days |
 | Query result caching (Upstash Redis, 5-min TTL for repeated AI queries) | 1 day | 3 days |
 | Security audit — SQL injection (parameterized queries audit), XSS, OWASP headers, CSRF | 1 day | 3 days |
-| Multi-tenant data isolation audit — every query has `WHERE tenant_id = ?`, pen-test cross-tenant access | 1 day | 3 days |
+| Multi-tenant data isolation audit — every query has `WHERE tenant_id = ?`, pen-test cross-tenant access | 0.5 day | 3 days |
 | Password policy enforcement (min length, bcrypt cost factor) + account lockout | 0.5 day | 1 day |
 
-**Phase total:** ~5.5 days AI · ~14 days traditional
+**Phase total:** ~5 days AI · ~14 days traditional
 
 ---
 
@@ -182,6 +182,8 @@ We are **not** using Supabase. All services are self-owned and self-managed:
 
 **Phase total:** ~6.5 days AI · ~15 days traditional
 
+> Deployment is simpler without Supabase — no Supabase project config, no RLS policy verification step, no Supabase CLI in CI.
+
 ---
 
 ## Total Development Timeline
@@ -189,17 +191,18 @@ We are **not** using Supabase. All services are self-owned and self-managed:
 | Phase | AI-Assisted | Traditional |
 |---|---|---|
 | ✅ 0 — Frontend Prototype | Complete | — |
-| 1 — Backend Foundation (Postgres + Auth.js) | 9 days | 20 days |
+| 1 — Backend Foundation (Postgres + Auth.js) | 7.5 days | 20 days |
 | 2 — File Ingestion (R2 + parser) | 6.5 days | 15 days |
 | 3 — Data Connectors (4 connectors + scheduler) | 13 days | 28 days |
-| 4 — AI/LLM Engine (pgvector + RAG + streaming) | 15 days | 38 days |
+| 4 — AI/LLM Engine (pgvector + RAG + streaming) | 14.5 days | 37 days |
 | 5 — Frontend Integration | 8 days | 16 days |
-| 6 — Production Hardening | 5.5 days | 14 days |
+| 6 — Production Hardening | 5 days | 14 days |
 | 7 — QA & Deployment | 6.5 days | 15 days |
-| **TOTAL** | **~64 days (~13 weeks)** | **~146 days (~29 weeks)** |
+| **TOTAL** | **~61 days (~12 weeks)** | **~145 days (~29 weeks)** |
 
-> AI-assisted development delivers the same output in ~44% of traditional time.
+> AI-assisted development delivers the same output in ~42% of traditional time.
 > Assumes 5-day work weeks, 1 developer + Claude Code AI pair.
+> Removing Supabase saves ~3 days: no RLS policy authoring, no Supabase CLI in CI, simpler deployment config.
 
 ---
 
