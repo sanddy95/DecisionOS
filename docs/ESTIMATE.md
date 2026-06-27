@@ -7,6 +7,17 @@
 
 ---
 
+## Client Requirements (Confirmed)
+
+| Question | Client Answer | Impact |
+|---|---|---|
+| **Data sources** | Zoho CRM + Custom ERP (both integration + file upload) | Zoho OAuth connector + generic ERP REST/webhook adapter |
+| **Connector priority** | Zoho is must-have for launch; others post-launch | Phase 3 focuses on Zoho first |
+| **Multi-tenancy** | Yes — each client company gets isolated workspace | Full multi-tenant from Phase 1; `tenant_id` on every row |
+| **LLM preference** | Users can switch provider + add new connections | Multi-provider LLM router in Admin Console; API keys per tenant |
+
+---
+
 ## Tech Stack Decision: Real PostgreSQL + Custom Auth
 
 We are **not** using Supabase. All services are self-owned and self-managed:
@@ -29,7 +40,7 @@ We are **not** using Supabase. All services are self-owned and self-managed:
 | Item | Detail |
 |---|---|
 | Total development | **~12 weeks** AI-assisted (full scope) |
-| MVP (3-week sprint) | Backend + 1 connector + LLM working end-to-end |
+| MVP (3-week sprint) | Backend + Zoho connector + LLM working end-to-end |
 | Traditional equivalent | ~26–28 weeks |
 | AI speed advantage | ~45–50% faster |
 | Monthly infra cost (launch) | ~$45–75/month |
@@ -62,20 +73,20 @@ We are **not** using Supabase. All services are self-owned and self-managed:
 
 | Task | AI Estimate | Traditional |
 |---|---|---|
-| PostgreSQL schema design (tenants, users, sessions, data_sources, kpis, insights, recommendations, tasks, audit_logs) | 2 days | 4 days |
+| PostgreSQL schema design (tenants, users, sessions, data_sources, kpis, insights, recommendations, tasks, audit_logs, llm_configs) | 2 days | 4 days |
 | Neon/Railway Postgres setup + migrations (Drizzle ORM) | 0.5 day | 2 days |
-| **Auth.js v5** setup — Credentials provider, bcrypt password hashing, JWT sessions | 1 day | 4 days |
+| **Auth.js v5** — Credentials provider, bcrypt password hashing, JWT sessions | 1 day | 4 days |
 | Session middleware (JWT validation on every API route) | 0.5 day | 2 days |
-| Multi-tenant middleware (tenant_id scoping on every DB query) | 2 days | 4 days |
+| Multi-tenant middleware (`tenant_id` scoping on every DB query) | 2 days | 4 days |
 | Next.js API Routes scaffolding (versioned, typed with Zod) | 1 day | 3 days |
 | Zustand auth store → real JWT session (replace mock cookie) | 0.5 day | 1 day |
 
 **Phase total:** ~7.5 days AI · ~20 days traditional
 
-**Auth flow detail:**
-- User logs in → Auth.js Credentials provider → bcrypt verify password → issue JWT (httpOnly cookie, 7-day expiry)
-- Next.js middleware reads JWT → extracts `userId` + `tenantId` → passes to API routes via request header
-- All API routes validate JWT; no request touches DB without verified `tenantId`
+**Auth flow:**
+- Login → Auth.js Credentials → bcrypt verify → JWT issued as httpOnly cookie (7-day expiry)
+- Middleware reads JWT → extracts `userId` + `tenantId` → every API route and DB query is scoped automatically
+- Tenant isolation: separate schema per tenant OR `tenant_id` column with enforced query filter (decided in schema design)
 
 ---
 
@@ -98,40 +109,58 @@ We are **not** using Supabase. All services are self-owned and self-managed:
 
 ### Phase 3 — Data Connectors
 
-**Scope:** OAuth integrations + sync jobs for CRM/DB sources
+**Scope:** Zoho CRM (launch), Custom ERP (launch), plus file-upload sources. Additional connectors post-launch.
 
-| Connector | Tasks | AI Estimate | Traditional |
-|---|---|---|---|
-| **Salesforce** | OAuth 2.0 PKCE flow, SOQL queries, Contacts/Opportunities/Accounts sync, incremental updates via `SystemModstamp` | 3 days | 7 days |
-| **HubSpot** | OAuth 2.0, REST API v3, Deals/Contacts/Companies/Engagements sync, delta sync via `lastModifiedDate` | 3 days | 6 days |
-| **Google Sheets** | OAuth 2.0 (Google Cloud project), Sheets API v4, range polling, change detection via `revision` | 2 days | 4 days |
-| **PostgreSQL** | Direct connection config UI, pg connection test, table/column browser, scheduled SELECT pull | 2 days | 4 days |
-| **Sync scheduler** | pg-boss job queue (runs in same Postgres), cron scheduling per source, retry + backoff, sync status updates | 2 days | 5 days |
-| **Connector UI wiring** | Connect button → real OAuth redirect → callback → store encrypted credentials | 1 day | 2 days |
+| Connector | Tasks | AI Estimate | Traditional | Priority |
+|---|---|---|---|---|
+| **Zoho CRM** | OAuth 2.0 (Zoho Accounts Server), REST API v7, Contacts/Deals/Accounts/Activities sync, delta sync via `Modified_Time`, field mapping UI | 4 days | 8 days | **Launch** |
+| **Custom ERP** | Generic REST adapter (configurable base URL, auth header, endpoint mapping), webhook receiver for push events, field mapper UI, manual sync trigger | 4 days | 9 days | **Launch** |
+| **PostgreSQL direct** | Connection config UI, pg test, table/column browser, scheduled SELECT pull | 2 days | 4 days | **Launch** |
+| **Google Sheets** | OAuth 2.0 (Google Cloud), Sheets API v4, range polling, revision-based change detection | 2 days | 4 days | Post-launch |
+| **Salesforce** | OAuth 2.0 PKCE, SOQL queries, Contacts/Opportunities sync | 3 days | 7 days | Post-launch |
+| **Sync scheduler** | pg-boss job queue, cron per source, retry + exponential backoff, sync status in DB | 2 days | 5 days | **Launch** |
+| **Connector UI wiring** | Connect button → real OAuth redirect → callback → encrypted credential storage | 1 day | 2 days | **Launch** |
 
-**Phase total:** ~13 days AI · ~28 days traditional
+**Launch connectors total:** ~13 days AI · ~28 days traditional
+**Post-launch connectors:** ~5 days AI (added in a future sprint)
 
-**Credential storage:** OAuth tokens and DB credentials stored encrypted (`AES-256-GCM`) in Postgres, never in env vars or logs.
+**Custom ERP note:** Since the ERP is bespoke, we build a generic connector template with:
+- Configurable API base URL, auth type (API key / Bearer / Basic)
+- JSON field path mapping (drag-and-drop in Admin Console)
+- Webhook endpoint for real-time push from ERP
+- The client provides ERP API docs; we map fields during sprint
+
+**Credential storage:** OAuth tokens + API keys stored encrypted (`AES-256-GCM`) in Postgres, never in env vars or logs.
 
 ---
 
 ### Phase 4 — AI / LLM Engine
 
-**Scope:** Real AI reasoning over ingested data — replaces all mock responses
+**Scope:** Real AI reasoning over ingested data + multi-provider LLM switcher per tenant
 
 | Task | AI Estimate | Traditional |
 |---|---|---|
-| pgvector extension on same Postgres (no new service) — embedding schema | 0.5 day | 2 days |
-| Embedding pipeline — chunk ingested rows → `text-embedding-3-small` (OpenAI) → store vectors | 2 days | 5 days |
-| RAG retrieval — natural language query → embed → cosine similarity search → context assembly | 2 days | 6 days |
-| SQL generation — LLM converts query intent to SQL, executes against tenant's data, returns structured result | 2 days | 5 days |
-| LLM router — Anthropic Claude (claude-sonnet-4-6 for complex, claude-haiku-4-5 for bulk) | 1 day | 2 days |
+| pgvector extension on same Postgres — embedding schema | 0.5 day | 2 days |
+| Embedding pipeline — chunk ingested rows → embed via selected provider → store vectors | 2 days | 5 days |
+| RAG retrieval — natural language query → embed → cosine similarity → context assembly | 2 days | 6 days |
+| SQL generation — LLM converts query intent to SQL → executes → returns structured result + citations | 2 days | 5 days |
+| **Multi-provider LLM router** — route to whichever provider the tenant has configured | 2 days | 4 days |
+| **LLM provider integrations:** Anthropic Claude, OpenAI GPT-4o, Google Gemini, Ollama (self-hosted) | 2 days | 5 days |
+| **LLM Config UI** (Admin Console) — add API key, select model, test connection, set as default | 1 day | 2 days |
 | Prompt engineering — query decomposition, citation extraction, confidence scoring | 3 days | 7 days |
 | Server-Sent Events streaming — AI response streams to existing chat UI in real time | 1 day | 2 days |
 | AI Executive Summary generator — scheduled nightly per tenant, stored in DB | 1 day | 3 days |
 | Insight + Recommendation auto-generation (LLM analysis + threshold rule engine) | 2 days | 5 days |
 
-**Phase total:** ~14.5 days AI · ~37 days traditional
+**Phase total:** ~18.5 days AI · ~46 days traditional
+
+**Multi-provider LLM switcher detail:**
+- Each tenant stores their own API keys (encrypted) for each provider
+- Admin Console → LLM Settings → add provider → paste API key → select default model → Test connection
+- Users can override the default per-session from the Ask AI page
+- Provider support at launch: **Anthropic Claude** (claude-sonnet-4-6, claude-haiku-4-5), **OpenAI** (gpt-4o, gpt-4o-mini), **Google Gemini** (gemini-1.5-pro)
+- Post-launch: Ollama (self-hosted open-source models)
+- New provider = add a new adapter class (~1 day dev effort per provider)
 
 ---
 
@@ -161,9 +190,9 @@ We are **not** using Supabase. All services are self-owned and self-managed:
 | API rate limiting (Upstash Redis sliding window, per user + per tenant) | 1 day | 2 days |
 | Error boundaries + structured logging (Sentry + Pino logger) | 1 day | 2 days |
 | Query result caching (Upstash Redis, 5-min TTL for repeated AI queries) | 1 day | 3 days |
-| Security audit — SQL injection (parameterized queries audit), XSS, OWASP headers, CSRF | 1 day | 3 days |
-| Multi-tenant data isolation audit — every query has `WHERE tenant_id = ?`, pen-test cross-tenant access | 0.5 day | 3 days |
-| Password policy enforcement (min length, bcrypt cost factor) + account lockout | 0.5 day | 1 day |
+| Security audit — SQL injection (parameterized queries), XSS, OWASP headers, CSRF | 1 day | 3 days |
+| Multi-tenant data isolation audit — cross-tenant access pen-test | 0.5 day | 3 days |
+| Password policy + account lockout | 0.5 day | 1 day |
 
 **Phase total:** ~5 days AI · ~14 days traditional
 
@@ -174,7 +203,7 @@ We are **not** using Supabase. All services are self-owned and self-managed:
 | Task | AI Estimate | Traditional |
 |---|---|---|
 | Unit + integration tests (Vitest — API routes, auth middleware, data ingestion) | 2 days | 5 days |
-| E2E tests (Playwright — login, upload CSV, ask AI, connector OAuth flow) | 2 days | 5 days |
+| E2E tests (Playwright — login, upload CSV, Zoho connect, ask AI) | 2 days | 5 days |
 | GitHub Actions CI pipeline (type-check, lint, test, preview deploy on PR) | 1 day | 2 days |
 | Production environment setup (Vercel + Neon/Railway + Cloudflare R2) | 0.5 day | 1 day |
 | Custom domain, SSL (Vercel handles), env var management | 0.5 day | 1 day |
@@ -182,7 +211,7 @@ We are **not** using Supabase. All services are self-owned and self-managed:
 
 **Phase total:** ~6.5 days AI · ~15 days traditional
 
-> Deployment is simpler without Supabase — no Supabase project config, no RLS policy verification step, no Supabase CLI in CI.
+> Deployment is simpler without Supabase — no Supabase project config, no RLS verification step, no Supabase CLI in CI.
 
 ---
 
@@ -193,37 +222,35 @@ We are **not** using Supabase. All services are self-owned and self-managed:
 | ✅ 0 — Frontend Prototype | Complete | — |
 | 1 — Backend Foundation (Postgres + Auth.js) | 7.5 days | 20 days |
 | 2 — File Ingestion (R2 + parser) | 6.5 days | 15 days |
-| 3 — Data Connectors (4 connectors + scheduler) | 13 days | 28 days |
-| 4 — AI/LLM Engine (pgvector + RAG + streaming) | 14.5 days | 37 days |
+| 3 — Connectors (Zoho + Custom ERP + PostgreSQL) | 13 days | 28 days |
+| 4 — AI/LLM Engine (pgvector + RAG + multi-provider) | 18.5 days | 46 days |
 | 5 — Frontend Integration | 8 days | 16 days |
 | 6 — Production Hardening | 5 days | 14 days |
 | 7 — QA & Deployment | 6.5 days | 15 days |
-| **TOTAL** | **~61 days (~12 weeks)** | **~145 days (~29 weeks)** |
+| **TOTAL** | **~65 days (~13 weeks)** | **~154 days (~31 weeks)** |
 
-> AI-assisted development delivers the same output in ~42% of traditional time.
-> Assumes 5-day work weeks, 1 developer + Claude Code AI pair.
-> Removing Supabase saves ~3 days: no RLS policy authoring, no Supabase CLI in CI, simpler deployment config.
+> The multi-provider LLM switcher adds ~3.5 days vs a single-provider setup — worthwhile given client confirmed it as a requirement.
+> Post-launch connectors (Google Sheets, Salesforce) add ~5 days in a future sprint.
+
+**Rounding to 12 weeks delivery:** Phases 1–2 can overlap (file ingestion doesn't block auth schema). Running them in parallel with two AI subagent streams saves ~4–5 days, bringing wall-clock delivery to **~12 weeks**.
 
 ---
 
 ## 3-Week MVP Scope
 
-For a fast client demo / pilot delivery:
-
 | Week | Phases | Deliverable |
 |---|---|---|
-| **Week 1** | Phase 1 + Phase 2 | Real login (Auth.js + Postgres), CSV upload → stored in DB, Ask AI works on uploaded data |
-| **Week 2** | Phase 4 (core RAG + streaming) + Phase 5 (partial) | Ask AI returns real answers from real data, streaming responses, KPI cards live |
-| **Week 3** | Phase 3 (HubSpot only) + Phase 7 (deployment) | 1 live CRM connected, production URL on custom domain |
+| **Week 1** | Phase 1 + Phase 2 | Real login (Auth.js + Postgres), multi-tenant workspaces, CSV upload → stored in DB |
+| **Week 2** | Phase 4 (core RAG + streaming + 2 LLM providers) + Phase 5 (partial) | Ask AI works on real uploaded data, LLM switcher in Admin (Claude + OpenAI) |
+| **Week 3** | Phase 3 (Zoho CRM only) + Phase 7 (deployment) | Zoho connected, data syncs to Ask AI, production URL on custom domain |
 
 **MVP cuts:**
-- Salesforce, Google Sheets, PostgreSQL connector deferred to sprint 2
+- Custom ERP connector deferred to sprint 2 (needs ERP API docs from client)
+- Google Sheets, Salesforce: post-launch
 - No Redis caching (direct LLM calls)
 - No Playwright E2E tests (manual QA only)
-- Multi-tenancy: single tenant, multiple users (full multi-tenant in sprint 2)
+- Gemini + Ollama LLM providers deferred (Claude + OpenAI at launch)
 - No pg-boss scheduler (manual sync trigger only)
-
-**Full product:** Sprints 2–3 (remaining 9 weeks) complete all connectors, multi-tenancy, caching, and test coverage.
 
 ---
 
@@ -234,36 +261,30 @@ For a fast client demo / pilot delivery:
 | Service | Purpose | Plan | Monthly Cost |
 |---|---|---|---|
 | **Vercel** | Frontend + API Routes hosting, preview deploys | Pro | $20 |
-| **Neon** (Postgres) | Primary database + pgvector | Free → Launch ($19) | $0–19 |
-| **Cloudflare R2** | File storage (CSV/Excel uploads) | Pay-as-you-go | $0–5 |
+| **Neon** (Postgres) | Primary DB + pgvector + pg-boss jobs | Free → Launch ($19) | $0–19 |
+| **Cloudflare R2** | File storage (CSV/Excel/ERP exports) | Pay-as-you-go | $0–5 |
 | **Upstash Redis** | API rate limiting + LLM response cache | Pay-as-you-go | $0–10 |
-| **Railway** | Background sync worker (pg-boss jobs) | Starter | $5–10 |
+| **Railway** | Background sync worker (if pg-boss hits Neon connection limits) | Starter | $0–10 |
 | **Sentry** | Error monitoring | Developer (free) | $0 |
 | **GitHub** | Source control + CI/CD Actions | Free | $0 |
-| **Total infra** | | | **$25–64/month** |
-
-> No Supabase. No Auth0/Clerk. No third-party auth vendor fees.
+| **Total infra** | | | **$20–64/month** |
 
 ---
 
-### Auth Cost: $0
+### LLM API Costs — Multi-Provider (Usage-Based)
 
-Auth.js v5 is open-source. Auth is handled entirely within the Next.js app using:
-- `bcryptjs` for password hashing (npm package, free)
-- JWT sessions stored as httpOnly cookies (no external service)
-- Postgres `sessions` table for server-side session validation if needed
+The tenant chooses which provider to use. Costs are billed directly to the tenant's own API keys — DecisionOS does not mark up LLM costs.
 
----
+| Provider | Model | Price (input / output per 1M tokens) |
+|---|---|---|
+| **Anthropic Claude** | claude-sonnet-4-6 | $3 / $15 |
+| **Anthropic Claude** | claude-haiku-4-5 | $0.25 / $1.25 |
+| **OpenAI** | gpt-4o | $2.50 / $10 |
+| **OpenAI** | gpt-4o-mini | $0.15 / $0.60 |
+| **Google Gemini** | gemini-1.5-pro | $1.25 / $5 |
+| **Embeddings** | text-embedding-3-small (OpenAI) | $0.02 / 1M tokens |
 
-### LLM API Costs (Usage-Based)
-
-| Provider | Model | Use Case | Price |
-|---|---|---|---|
-| **Anthropic Claude** | claude-sonnet-4-6 | Ask AI queries, insight generation | $3 / 1M input · $15 / 1M output tokens |
-| **Anthropic Claude** | claude-haiku-4-5 | Bulk summarisation, scheduled reports | $0.25 / 1M input · $1.25 / 1M output tokens |
-| **OpenAI** | text-embedding-3-small | Vector embeddings for RAG | $0.02 / 1M tokens |
-
-**Estimated monthly LLM spend by usage tier:**
+**Estimated monthly LLM spend by usage tier (using Claude Sonnet as baseline):**
 
 | Users | Queries/Day | Est. Monthly LLM Cost |
 |---|---|---|
@@ -272,7 +293,7 @@ Auth.js v5 is open-source. Auth is handled entirely within the Next.js app using
 | 200 (growth) | 1,500 | ~$180–350 |
 | 500+ (scale) | 5,000 | ~$500–900 |
 
-> Redis caching cuts repeated LLM calls by ~40–60% at scale.
+> Tenants using gpt-4o-mini or claude-haiku can reduce LLM costs by ~80% for bulk/scheduled tasks.
 
 ---
 
@@ -280,13 +301,12 @@ Auth.js v5 is open-source. Auth is handled entirely within the Next.js app using
 
 | Connector | API Access Cost | Notes |
 |---|---|---|
-| **Salesforce** | Free | Connected App in client's Salesforce org. No per-API-call cost. |
-| **HubSpot** | Free | Private App with scoped token. Free for API reads. |
-| **Google Sheets** | Free | Google Cloud project (free), Sheets API v4, 300 req/min quota. |
-| **PostgreSQL** | Free | Direct TCP. Client provides host/credentials. |
-| **Stripe** *(future)* | Free | Read-only restricted key from client's Stripe dashboard. |
-| **Zendesk** *(future)* | Free | API token from client's Zendesk account. |
-| **Total** | | **$0/month** — all connectors use client's own credentials |
+| **Zoho CRM** | Free | OAuth 2.0 via Zoho Accounts Server. Client registers a Zoho Server-based App (free). API calls free within Zoho plan limits. |
+| **Custom ERP** | Free | Client provides REST API base URL + auth credentials. No third-party cost — direct integration. |
+| **PostgreSQL direct** | Free | Client provides host/credentials. TCP connection. |
+| **Google Sheets** *(post-launch)* | Free | Google Cloud project, Sheets API v4. Free within 300 req/min. |
+| **Salesforce** *(post-launch)* | Free | Connected App in client's org. No per-API-call cost. |
+| **Total connector cost** | | **$0/month** — all connectors use client's own credentials |
 
 ---
 
@@ -294,22 +314,22 @@ Auth.js v5 is open-source. Auth is handled entirely within the Next.js app using
 
 | Service | Purpose | Cost |
 |---|---|---|
-| **Resend** | Transactional email (password reset, alerts) | Free up to 3,000/month |
-| **Cloudflare** | CDN + WAF + DDoS | Free tier sufficient |
-| **PostHog** | Product analytics | Free up to 1M events/month |
+| **Resend** | Transactional email (password reset, sync alerts, invites) | Free up to 3,000/month |
+| **Cloudflare** | CDN + WAF + DDoS protection | Free tier sufficient |
+| **PostHog** | Product analytics (per-tenant feature usage) | Free up to 1M events/month |
 
 ---
 
 ## Total Monthly Cost Summary
 
-| Scale | Infra | LLM API | Total/Month |
+| Scale | Infra | LLM API* | Total/Month |
 |---|---|---|---|
-| Pilot (10 users) | $25–45 | $10–25 | **~$35–70** |
+| Pilot (10 users) | $20–45 | $10–25 | **~$30–70** |
 | Early SaaS (50 users) | $45–65 | $50–100 | **~$95–165** |
 | Growth (200 users) | $65–100 | $180–350 | **~$245–450** |
 | Scale (500+ users) | $100–200 | $500–900 | **~$600–1,100** |
 
-> ~35–40% cheaper than the Supabase-based architecture at every tier.
+*LLM costs billed to tenant's own API key — can be passed through to client at cost or marked up.
 
 ---
 
@@ -318,7 +338,7 @@ Auth.js v5 is open-source. Auth is handled entirely within the Next.js app using
 | Tool | Role |
 |---|---|
 | **Claude Code (claude-sonnet-4-6)** | Primary implementer + reviewer per phase |
-| **Subagent-Driven Development (SDD)** | Fresh implementer + reviewer per task (same methodology used for frontend) |
+| **Subagent-Driven Development (SDD)** | Fresh implementer + reviewer per task — same methodology used for frontend |
 | **GitHub Actions** | CI: type-check, lint, Vitest, Playwright on every PR |
 | **Vercel Preview Deployments** | Every PR gets a live preview URL for visual QA |
 | **Chrome MCP** | Visual verification after each phase |
@@ -330,14 +350,14 @@ Auth.js v5 is open-source. Auth is handled entirely within the Next.js app using
 
 | Risk | Likelihood | Mitigation |
 |---|---|---|
-| OAuth complexity — Salesforce sandbox vs production scope differences | Medium | Budget 1 extra day per connector for scope debugging |
-| Auth.js v5 session edge cases (concurrent requests, session refresh race) | Low | Use database sessions (not JWT) if stateless JWT proves unreliable |
-| LLM response quality on client's specific data schema | Medium | 3-day prompt engineering buffer included in Phase 4 |
-| pgvector cold query latency on large datasets | Low | Add `ivfflat` index after 100K+ vectors; benchmark before launch |
-| Client data schema unpredictability (unusual CRM field names) | High | Schema inference + manual field mapping UI covers this |
-| Neon connection limits on free tier | Low | Upgrade to Launch plan ($19/month) if >100 concurrent connections |
+| **Custom ERP API unpredictability** — undocumented endpoints, inconsistent field names | High | Generic adapter + field mapping UI; budget 1 extra day after client provides API docs |
+| **Zoho OAuth scope differences** — sandbox vs production, rate limits (100 req/min on free plan) | Medium | Use Zoho sandbox for dev; test rate limit handling before go-live |
+| **LLM provider API changes** — provider updates breaking our adapter | Low | Each provider is a separate adapter class; swap without touching core router |
+| **Multi-tenant data isolation** — cross-tenant query leakage | Low | Enforced at middleware layer + audit in Phase 6; automated pen-test in Playwright |
+| **pgvector query latency on large datasets** | Low | Add `ivfflat` index after 100K+ vectors; benchmark before launch |
+| **Client ERP rate limits or IP allowlisting requirements** | Medium | Build retry + backoff into sync scheduler; coordinate IP allowlist with client IT |
 
-**Recommended buffer:** +10% (~6–7 days) for unknowns.
+**Recommended buffer:** +10% (~6–7 days) for unknowns, especially Custom ERP integration.
 
 ---
 
@@ -345,14 +365,25 @@ Auth.js v5 is open-source. Auth is handled entirely within the Next.js app using
 
 | Phase | Client-Visible Deliverable |
 |---|---|
-| Phase 1 | Working login (real Postgres users), multi-tenant isolation confirmed |
-| Phase 2 | Upload CSV → appears in Data Sources → can query it via Ask AI |
-| Phase 3 | Connect HubSpot → data syncs automatically → Ask AI answers from CRM data |
-| Phase 4 | Ask AI returns real streaming answers with SQL citations from live data |
+| Phase 1 | Working login, multi-tenant workspaces (each client = isolated DB namespace) |
+| Phase 2 | Upload CSV/Excel → appears in Data Sources → Ask AI answers from it |
+| Phase 3 | Zoho CRM connected → contacts/deals sync → Ask AI answers from live CRM data |
+| Phase 4 | Ask AI streams real answers with SQL citations; tenant can switch between Claude / GPT-4o / Gemini in Admin |
 | Phase 5 | All dashboard KPIs, charts, insights driven entirely by live data |
 | Phase 6 | Security audit report + rate limiting confirmed + performance benchmarks |
-| Phase 7 | Full test coverage report + production URL on custom domain |
+| Phase 7 | Full test coverage + production URL on custom domain + Zoho + ERP both connected |
 
 ---
 
-*Estimate prepared using DecisionOS frontend prototype as the baseline. Stack updated to real PostgreSQL (Neon/Railway) + Auth.js v5 — no Supabase. All phase estimates assume AI-assisted development with Claude Code.*
+## Open Questions for Client
+
+| Question | Why It Matters |
+|---|---|
+| Can you share the Custom ERP API documentation (base URL, auth type, key endpoints)? | Needed to scope the ERP connector accurately; missing docs = 1–2 day risk buffer |
+| Which Zoho plan are you on? (Free = 100 API req/min; Professional+ = higher limits) | Determines sync frequency we can offer without hitting rate limits |
+| How many tenant organizations do you expect at launch? | Informs whether we use `tenant_id` column approach or separate schemas per tenant |
+| Do tenants bring their own LLM API keys, or does DecisionOS hold one shared key? | Billing model decision — shared key = you absorb LLM cost; per-tenant keys = tenants pay directly |
+
+---
+
+*Estimate prepared using DecisionOS frontend prototype as the baseline. Stack: real PostgreSQL (Neon/Railway) + Auth.js v5 + Cloudflare R2. Connectors updated to Zoho CRM + Custom ERP per client confirmation. LLM multi-provider switcher added per client requirement.*
