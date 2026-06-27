@@ -29,11 +29,11 @@ export default function AuditLogsPage() {
     <div className="p-8 space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Audit Logs</h1>
-        <p className="text-sm text-gray-400 mt-1">Platform-wide activity trail across all tenants</p>
+        <p className="text-sm text-gray-500 mt-1">Platform-wide activity trail across all tenants</p>
       </div>
 
-      <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
-        <div className="divide-y divide-gray-800">
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="divide-y divide-gray-100">
           {auditLogs.map(log => {
             const Icon = typeIcons[log.type] ?? ScrollText
             return (
