@@ -11,7 +11,8 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { formatDate, getInitials } from '@/lib/utils'
 import { toast } from 'sonner'
-import { Shield, Users, Database, Key, ClipboardList, Settings } from 'lucide-react'
+import { Shield, Users, Database, Key, ClipboardList, Settings, ExternalLink, Info } from 'lucide-react'
+import { subscriptionPlans } from '@/lib/mock-data'
 
 const roleColors: Record<string, string> = {
   'Super Admin': 'bg-red-100 text-red-700',
@@ -34,9 +35,22 @@ export default function AdminPage() {
   const [users, setUsers] = useState(mockUsers)
   const [llmModel, setLlmModel] = useState('gpt-4o')
   const [temperature, setTemperature] = useState('0.3')
+  // Demo: Acme Corp is Enterprise — all providers available
+  const tenantPlan = subscriptionPlans.find(p => p.name === 'Enterprise')!
+  const availableProviders = tenantPlan.allowedProviders
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold">Admin Console</h2>
+          <p className="text-sm text-muted-foreground">Manage users, roles, LLM settings, and organization configuration</p>
+        </div>
+        <a href="/platform" target="_blank"
+          className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg border border-violet-200 dark:border-violet-800 text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30 transition-colors">
+          <ExternalLink size={12} /> Platform Admin Panel
+        </a>
+      </div>
       <Tabs defaultValue="users">
         <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:grid-cols-none lg:flex">
           <TabsTrigger value="users" className="gap-1.5"><Users size={14} />Users</TabsTrigger>
@@ -95,18 +109,28 @@ export default function AdminPage() {
         {/* LLM Settings Tab */}
         <TabsContent value="llm" className="mt-6">
           <div className="max-w-lg space-y-6">
+            {/* Plan notice */}
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900">
+              <Info size={15} className="text-blue-600 mt-0.5 shrink-0" />
+              <div className="text-xs text-blue-700 dark:text-blue-300">
+                <p className="font-semibold">Enterprise Plan — All providers available</p>
+                <p className="text-blue-600 dark:text-blue-400 mt-0.5">Available providers are determined by your subscription plan. Upgrade your plan to unlock more providers.</p>
+              </div>
+            </div>
+
             <div className="rounded-xl border bg-card p-6 space-y-4">
               <h3 className="font-semibold">LLM Provider Configuration</h3>
               <div className="space-y-1.5">
-                <Label>Provider</Label>
-                <Select defaultValue="openai">
+                <Label>Active Provider</Label>
+                <Select defaultValue="anthropic">
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="openai">OpenAI (GPT-4o)</SelectItem>
-                    <SelectItem value="anthropic">Anthropic (Claude 4 Sonnet)</SelectItem>
-                    <SelectItem value="gemini">Google (Gemini 2.0 Flash)</SelectItem>
+                    {availableProviders.map(p => (
+                      <SelectItem key={p} value={p.toLowerCase().replace(/\s/g, '-')}>{p}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground">{availableProviders.length} providers available on your plan</p>
               </div>
               <div className="space-y-1.5">
                 <Label>Model</Label>
@@ -116,6 +140,8 @@ export default function AdminPage() {
                     <SelectItem value="gpt-4o">GPT-4o (Recommended)</SelectItem>
                     <SelectItem value="gpt-4o-mini">GPT-4o Mini (Faster)</SelectItem>
                     <SelectItem value="claude-sonnet-4-6">Claude Sonnet 4.6</SelectItem>
+                    <SelectItem value="claude-opus-4-8">Claude Opus 4.8</SelectItem>
+                    <SelectItem value="gemini-pro">Gemini Pro</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
