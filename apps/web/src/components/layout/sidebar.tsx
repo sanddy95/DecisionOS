@@ -1,6 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/store/ui.store'
 import {
@@ -29,7 +30,11 @@ function getInitials(name: string) {
 
 export function Sidebar() {
   const pathname = usePathname()
-  const { sidebarOpen, toggleSidebar } = useUIStore()
+  const { sidebarOpen, toggleSidebar, setSidebarOpen } = useUIStore()
+
+  useEffect(() => {
+    if (window.innerWidth < 768) setSidebarOpen(false)
+  }, [pathname, setSidebarOpen])
 
   return (
     <>
