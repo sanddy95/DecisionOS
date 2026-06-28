@@ -32,44 +32,53 @@ export function InsightCard({ insight, onDismiss, onCreateRecommendation }: Insi
   const TypeIcon = typeConf.icon
 
   return (
-    <div className="rounded-xl border bg-card p-5 hover:shadow-sm transition-shadow">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-start gap-3 flex-1 min-w-0">
-          <div className={cn('w-9 h-9 rounded-lg flex items-center justify-center shrink-0', typeConf.bg)}>
-            <TypeIcon size={17} className={typeConf.color} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-1">
+    <div className="rounded-xl border bg-card p-4 hover:shadow-sm transition-shadow">
+      {/* Header: icon + badges + timestamp */}
+      <div className="flex items-start gap-3">
+        <div className={cn('w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5', typeConf.bg)}>
+          <TypeIcon size={17} className={typeConf.color} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <div className="flex items-center gap-1.5">
               <Badge className={cn('text-xs border-0 capitalize', severityColors[insight.severity])}>{insight.severity}</Badge>
               <Badge variant="outline" className="text-xs">{typeConf.label}</Badge>
-              <span className="text-xs text-muted-foreground ml-auto">
-                {formatDistanceToNow(new Date(insight.createdAt), { addSuffix: true })}
-              </span>
             </div>
-            <h3 className="font-semibold text-sm leading-snug">{insight.title}</h3>
-            <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{insight.description}</p>
+            <span className="text-xs text-muted-foreground shrink-0">
+              {formatDistanceToNow(new Date(insight.createdAt), { addSuffix: true })}
+            </span>
           </div>
+          <h3 className="font-semibold text-sm leading-snug">{insight.title}</h3>
         </div>
       </div>
 
-      <div className="mt-4 pt-4 border-t flex flex-wrap items-center gap-3">
-        <div className="flex-1 min-w-0">
-          <p className="text-xs text-muted-foreground">
-            <span className="font-medium text-foreground">Impact: </span>{insight.estimatedImpact}
+      {/* Description */}
+      <p className="text-sm text-muted-foreground mt-2 leading-relaxed pl-12">{insight.description}</p>
+
+      {/* Footer */}
+      <div className="mt-3 pt-3 border-t space-y-3">
+        {/* Impact + entities */}
+        <div>
+          <p className="text-xs">
+            <span className="font-medium text-foreground">Impact: </span>
+            <span className="text-muted-foreground">{insight.estimatedImpact}</span>
           </p>
           {insight.affectedEntities.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-1.5">
+            <div className="flex flex-wrap gap-1.5 mt-1.5">
               {insight.affectedEntities.map(e => (
-                <span key={e} className="text-xs bg-muted rounded px-2 py-0.5">{e}</span>
+                <span key={e} className="text-xs bg-muted rounded-full px-2.5 py-0.5 font-medium">{e}</span>
               ))}
             </div>
           )}
         </div>
-        <div className="flex gap-2 shrink-0">
-          <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => { onDismiss(insight.id); toast.success('Insight dismissed') }}>
+        {/* Action buttons — full width row */}
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" className="flex-1 h-8 text-xs"
+            onClick={() => { onDismiss(insight.id); toast.success('Insight dismissed') }}>
             <X size={12} className="mr-1" /> Dismiss
           </Button>
-          <Button size="sm" className="h-7 text-xs bg-blue-600 hover:bg-blue-700 text-white" onClick={() => onCreateRecommendation(insight.id)}>
+          <Button size="sm" className="flex-1 h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+            onClick={() => onCreateRecommendation(insight.id)}>
             Create Action
           </Button>
         </div>

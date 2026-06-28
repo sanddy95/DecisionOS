@@ -65,16 +65,16 @@ export default function InsightsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-2 items-center">
-        <div className="flex gap-1 bg-muted rounded-lg p-1">
+      <div className="space-y-2">
+        <div className="flex gap-1 bg-muted rounded-lg p-1 overflow-x-auto">
           {typeFilters.map(f => (
             <button key={f.value} onClick={() => setType(f.value as InsightType | 'all')}
-              className={cn('px-3 py-1 text-sm rounded-md transition-colors', type === f.value ? 'bg-background shadow-sm font-medium' : 'text-muted-foreground hover:text-foreground')}>
+              className={cn('px-3 py-1.5 text-sm rounded-md transition-colors whitespace-nowrap shrink-0', type === f.value ? 'bg-background shadow-sm font-medium' : 'text-muted-foreground hover:text-foreground')}>
               {f.label}
             </button>
           ))}
         </div>
-        <span className="text-sm text-muted-foreground">{filtered.length} active insight{filtered.length !== 1 ? 's' : ''}</span>
+        <p className="text-xs text-muted-foreground">{filtered.length} active insight{filtered.length !== 1 ? 's' : ''}</p>
       </div>
 
       {/* Cards */}
