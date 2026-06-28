@@ -8,7 +8,9 @@ import { useUIStore } from '@/store/ui.store'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { sidebarOpen, setSidebarOpen } = useUIStore()
-  const [isMobile, setIsMobile] = useState(false)
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  )
 
   useEffect(() => {
     const check = () => {
