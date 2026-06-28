@@ -30,7 +30,7 @@ export default function PlatformSettingsPage() {
   }
 
   return (
-    <div className="p-8 space-y-8 max-w-4xl">
+    <div className="p-4 md:p-8 space-y-8 max-w-4xl">
       <div>
         <h1 className="text-2xl font-bold">Platform Settings</h1>
         <p className="text-sm text-gray-500 mt-1">Subscription plans, LLM providers, and feature flags</p>
@@ -51,7 +51,7 @@ export default function PlatformSettingsPage() {
                     <h3 className={`font-bold text-lg ${colorText[plan.color]}`}>{plan.name}</h3>
                     <span className="text-gray-700 font-semibold">{plan.priceMonthly > 0 ? `$${plan.priceMonthly}/mo` : 'Free'}</span>
                   </div>
-                  <div className="grid grid-cols-4 gap-4 text-sm">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
                       <p className="text-gray-500 text-xs">Max Users</p>
                       <p className="font-medium">{plan.maxUsers ?? '∞'}</p>

@@ -26,7 +26,7 @@ const typeColors: Record<string, string> = {
 
 export default function AuditLogsPage() {
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-4 md:p-8 space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Audit Logs</h1>
         <p className="text-sm text-gray-500 mt-1">Platform-wide activity trail across all tenants</p>
@@ -37,7 +37,7 @@ export default function AuditLogsPage() {
           {auditLogs.map(log => {
             const Icon = typeIcons[log.type] ?? ScrollText
             return (
-              <div key={log.id} className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">
+              <div key={log.id} className="flex items-center gap-3 px-4 md:px-6 py-3 md:py-4 hover:bg-gray-50 transition-colors">
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${typeColors[log.type]}`}>
                   <Icon size={14} />
                 </div>

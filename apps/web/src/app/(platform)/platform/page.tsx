@@ -25,14 +25,14 @@ export default function PlatformPage() {
   ]
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-4 md:p-8 space-y-6 md:space-y-8">
       <div>
         <h1 className="text-2xl font-bold">Platform Overview</h1>
         <p className="text-gray-500 mt-1 text-sm">Real-time health across all tenant workspaces</p>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {stats.map(s => (
           <div key={s.label} className="bg-white rounded-xl border border-gray-200 p-5">
             <div className="flex items-start justify-between">
@@ -53,7 +53,8 @@ export default function PlatformPage() {
           <h2 className="font-semibold text-sm">Tenant Health</h2>
           <span className="text-xs text-gray-500">{mockTenants.length} total</span>
         </div>
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[640px]">
           <thead>
             <tr className="border-b border-gray-200">
               {['Tenant', 'Plan', 'Status', 'Users', 'Data Sources', 'AI Queries/mo', 'MRR'].map(h => (
@@ -85,6 +86,7 @@ export default function PlatformPage() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   )

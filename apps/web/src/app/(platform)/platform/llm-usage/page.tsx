@@ -24,14 +24,14 @@ export default function LLMUsagePage() {
   const totalCost = mockTenants.reduce((a, t) => a + estimateCost(t.aiQueriesMonth, t.llmProvider), 0)
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-4 md:p-8 space-y-6">
       <div>
         <h1 className="text-2xl font-bold">LLM Usage</h1>
         <p className="text-sm text-gray-500 mt-1">Cross-tenant AI query usage and cost estimates</p>
       </div>
 
       {/* Summary */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
           { label: 'Total Queries / mo', value: totalQueries.toLocaleString(), sub: 'across all tenants', icon: Brain },
           { label: 'Estimated Cost / mo', value: `$${totalCost.toFixed(2)}`, sub: 'based on provider rates', icon: TrendingUp },
@@ -55,7 +55,8 @@ export default function LLMUsagePage() {
         <div className="px-6 py-4 border-b border-gray-200">
           <h2 className="font-semibold text-sm">Usage by Tenant</h2>
         </div>
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[560px]">
           <thead>
             <tr className="border-b border-gray-200">
               {['Tenant', 'Plan', 'LLM Provider', 'Queries / mo', 'Est. Cost', 'Avg / Day'].map(h => (
@@ -91,6 +92,7 @@ export default function LLMUsagePage() {
             </tr>
           </tfoot>
         </table>
+        </div>
       </div>
     </div>
   )

@@ -34,7 +34,7 @@ export default function TenantsPage() {
   const tabs: FilterTab[] = ['All', 'Active', 'Trial', 'Suspended']
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-4 md:p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Tenants</h1>
@@ -43,8 +43,8 @@ export default function TenantsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="relative flex-1 sm:max-w-sm">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <Input
             placeholder="Search tenants..."
@@ -65,7 +65,7 @@ export default function TenantsPage() {
       </div>
 
       {/* Cards */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {filtered.map(t => (
           <Link key={t.id} href={`/platform/tenants/${t.id}`}
             className="bg-white border border-gray-200 rounded-xl p-5 hover:border-violet-400 hover:shadow-sm transition-all group">

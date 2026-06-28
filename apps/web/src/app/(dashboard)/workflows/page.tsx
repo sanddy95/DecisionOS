@@ -42,7 +42,7 @@ export default function WorkflowsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <Badge className={cn('border-0 text-xs', priorityBadge[task.priority])}>{task.priority}</Badge>
+          <Badge className={cn('border-0 text-xs hidden sm:inline-flex', priorityBadge[task.priority])}>{task.priority}</Badge>
           <Badge className={cn('border-0 text-xs', statusBadge[task.status] ?? '')}>{task.status}</Badge>
           {task.status !== 'Completed' && (
             <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => markComplete(task.id)} aria-label="Mark complete">

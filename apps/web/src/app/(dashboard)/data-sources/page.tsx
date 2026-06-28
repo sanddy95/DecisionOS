@@ -48,7 +48,7 @@ function ConnectorDialog({ open, onOpenChange }: { open: boolean; onOpenChange: 
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><Link2 size={18} /> Connect a Data Source</DialogTitle>
         </DialogHeader>
-        <div className="grid grid-cols-2 gap-3 mt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
           {connectors.map(c => (
             <div key={c.id} className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
               <div className={`w-9 h-9 ${c.color} rounded-lg flex items-center justify-center shrink-0`}>
@@ -93,17 +93,17 @@ export default function DataSourcesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold">Data Sources</h2>
           <p className="text-sm text-muted-foreground">{sources.length} connected sources · {sources.reduce((acc, s) => acc + s.rows, 0).toLocaleString()} total rows</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" className="gap-2" onClick={() => setShowConnector(true)}>
-            <Zap size={15} /> Connect Source
+            <Zap size={15} /><span className="hidden sm:inline">Connect Source</span><span className="sm:hidden">Connect</span>
           </Button>
           <Button className="bg-blue-600 hover:bg-blue-700 text-white gap-2" onClick={() => setShowUpload(true)}>
-            <Upload size={15} /> Upload Data
+            <Upload size={15} /><span className="hidden sm:inline">Upload Data</span><span className="sm:hidden">Upload</span>
           </Button>
         </div>
       </div>

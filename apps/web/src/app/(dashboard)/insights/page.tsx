@@ -45,7 +45,7 @@ export default function InsightsPage() {
   return (
     <div className="space-y-6">
       {/* Stats row */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {(['critical', 'high', 'medium', 'low'] as InsightSeverity[]).map(s => {
           const count = insights.filter(i => i.status === 'active' && i.severity === s).length
           const colors: Record<InsightSeverity, string> = {
