@@ -106,7 +106,7 @@ export default function AdminPage() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {statCards.map(c => (
           <div key={c.label} className="rounded-xl border bg-card p-4">
             <div className="flex items-start justify-between">
@@ -128,14 +128,14 @@ export default function AdminPage() {
       </div>
 
       {/* Inner sidebar layout */}
-      <div className="flex gap-8">
-        {/* Left nav */}
-        <aside className="w-48 shrink-0">
-          <nav className="space-y-0.5 sticky top-4">
+      <div className="flex flex-col md:flex-row gap-2 md:gap-8">
+        {/* Left nav — horizontal scrollable on mobile, vertical on desktop */}
+        <aside className="w-full md:w-48 shrink-0">
+          <nav className="flex flex-row md:flex-col gap-1 md:gap-0.5 overflow-x-auto md:overflow-visible pb-1 md:pb-0 md:sticky md:top-4">
             {sections.map(s => (
               <button key={s.key} onClick={() => setActiveSection(s.key)}
                 className={cn(
-                  'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-left transition-colors',
+                  'flex items-center gap-2 md:gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-left transition-colors whitespace-nowrap shrink-0 md:w-full',
                   activeSection === s.key
                     ? 'bg-blue-50 text-blue-700 font-semibold'
                     : 'text-muted-foreground hover:text-foreground hover:bg-muted'
@@ -280,9 +280,9 @@ export default function AdminPage() {
 
         {/* Subscription */}
         {activeSection === 'subscription' && <div>
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left: current plan + usage */}
-            <div className="col-span-2 space-y-4">
+            <div className="lg:col-span-2 space-y-4">
               {/* Plan card */}
               <div className="rounded-xl border border-l-4 border-l-violet-500 bg-card p-6">
                 <div className="flex items-start justify-between mb-4">

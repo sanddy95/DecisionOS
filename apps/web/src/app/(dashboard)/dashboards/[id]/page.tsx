@@ -44,7 +44,7 @@ export default function DashboardPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold">{dashboard.name}</h2>
           <p className="text-sm text-muted-foreground">{dashboard.description}</p>

@@ -32,9 +32,21 @@ export function Sidebar() {
   const { sidebarOpen, toggleSidebar } = useUIStore()
 
   return (
+    <>
+      {/* Mobile backdrop — closes sidebar when tapping outside */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={toggleSidebar}
+        />
+      )}
     <aside className={cn(
       'fixed left-0 top-0 h-full bg-navy-900 text-white transition-all duration-300 z-40 flex flex-col',
-      sidebarOpen ? 'w-60' : 'w-16'
+      // Mobile: slide off-screen when closed, overlay when open (always 240px)
+      // Desktop: always visible, width toggles between 64px and 240px
+      sidebarOpen
+        ? 'translate-x-0 w-60'
+        : '-translate-x-full md:translate-x-0 w-60 md:w-16'
     )}>
       {/* Logo */}
       <div className={cn('flex items-center h-16 px-4 border-b border-white/10 shrink-0', sidebarOpen ? 'gap-3' : 'justify-center')}>
@@ -44,8 +56,8 @@ export function Sidebar() {
         {sidebarOpen && <span className="font-bold text-lg tracking-tight">DecisionOS</span>}
       </div>
 
-      {/* Current org — static, no switcher (each org has its own isolated workspace) */}
-      <div className={cn('px-2 py-3 border-b border-white/10 shrink-0', !sidebarOpen && 'flex justify-center')}>
+      {/* Current org — static, no switcher */}
+      <div className={cn('px-2 py-3 border-b border-white/10 shrink-0', !sidebarOpen && 'md:flex md:justify-center')}>
         {sidebarOpen ? (
           <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10">
             <div className="w-6 h-6 rounded bg-violet-600 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
@@ -57,7 +69,7 @@ export function Sidebar() {
             </div>
           </div>
         ) : (
-          <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
+          <div className="hidden md:flex w-8 h-8 rounded-lg bg-violet-600 items-center justify-center text-white text-[10px] font-bold shrink-0">
             {getInitials(CURRENT_ORG.name)}
           </div>
         )}
@@ -74,12 +86,12 @@ export function Sidebar() {
                 active
                   ? 'bg-blue-600 text-white'
                   : 'text-white/70 hover:text-white hover:bg-white/10',
-                !sidebarOpen && 'justify-center px-0 mx-2'
+                !sidebarOpen && 'md:justify-center md:px-0 md:mx-2'
               )}
               title={!sidebarOpen ? label : undefined}
             >
               <Icon size={18} className="shrink-0" />
-              {sidebarOpen && <span className="truncate">{label}</span>}
+              <span className={cn('truncate', !sidebarOpen && 'md:hidden')}>{label}</span>
             </Link>
           )
         })}
@@ -90,22 +102,23 @@ export function Sidebar() {
         <Link href="/admin"
           className={cn(
             'flex items-center h-10 px-4 rounded-lg mx-2 text-sm font-medium gap-3 text-white/70 hover:text-white hover:bg-white/10 transition-colors',
-            !sidebarOpen && 'justify-center px-0'
+            !sidebarOpen && 'md:justify-center md:px-0'
           )}
           title={!sidebarOpen ? 'Admin' : undefined}
         >
           <Settings size={18} className="shrink-0" />
-          {sidebarOpen && <span>Admin Console</span>}
+          <span className={cn(!sidebarOpen && 'md:hidden')}>Admin Console</span>
         </Link>
       </div>
 
-      {/* Collapse toggle */}
+      {/* Collapse toggle — desktop only */}
       <button onClick={toggleSidebar}
-        className="absolute -right-3 top-20 w-6 h-6 bg-navy-900 border border-white/20 rounded-full flex items-center justify-center text-white/70 hover:text-white transition-colors"
+        className="absolute -right-3 top-20 w-6 h-6 bg-navy-900 border border-white/20 rounded-full items-center justify-center text-white/70 hover:text-white transition-colors hidden md:flex"
         aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
       >
         {sidebarOpen ? <ChevronLeft size={12} /> : <ChevronRight size={12} />}
       </button>
     </aside>
+    </>
   )
 }
