@@ -6,7 +6,7 @@ import { ChatInput } from '@/components/chat/chat-input'
 import { FollowUpChips } from '@/components/chat/follow-up-chips'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { exampleQuestions, getAIResponse } from '@/lib/mock-ai-responses'
-import { Sparkles } from 'lucide-react'
+import { Sparkles, Plus } from 'lucide-react'
 import type { AIResponse } from '@/lib/mock-ai-responses'
 
 interface Message {
@@ -74,7 +74,14 @@ export default function AskAIPage() {
       <SessionSidebar sessions={sessions} activeId={activeId} onSelect={setActiveId} onNew={handleNew} />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <ScrollArea className="flex-1 p-6">
+        {/* Mobile-only new conversation bar */}
+        <div className="md:hidden flex items-center justify-between px-4 py-2 border-b bg-muted/20 shrink-0">
+          <span className="text-xs text-muted-foreground truncate">{active.title}</span>
+          <button onClick={handleNew} className="flex items-center gap-1 text-xs text-primary hover:underline shrink-0 ml-2">
+            <Plus size={13} /> New
+          </button>
+        </div>
+        <ScrollArea className="flex-1 p-4 md:p-6">
           {active.messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full py-20 text-center">
               <div className="w-14 h-14 bg-navy-900 rounded-2xl flex items-center justify-center mb-4">

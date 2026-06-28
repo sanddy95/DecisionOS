@@ -15,7 +15,7 @@ interface SessionSidebarProps {
 
 export function SessionSidebar({ sessions, activeId, onSelect, onNew }: SessionSidebarProps) {
   return (
-    <div className="w-64 border-r bg-muted/30 flex flex-col shrink-0">
+    <div className="hidden md:flex md:w-64 border-r bg-muted/30 flex-col shrink-0">
       <div className="p-3 border-b">
         <Button onClick={onNew} variant="outline" size="sm" className="w-full gap-2">
           <Plus size={14} /> New conversation
