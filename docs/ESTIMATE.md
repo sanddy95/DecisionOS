@@ -14,7 +14,7 @@
 | **Data sources** | Zoho CRM + Custom ERP (both integration + file upload) | Zoho OAuth connector + generic ERP REST/webhook adapter |
 | **Connector priority** | Zoho is must-have for launch; others post-launch | Phase 3 focuses on Zoho first |
 | **Multi-tenancy** | Yes — each client company gets isolated workspace | Schema-per-tenant from Phase 1 |
-| **LLM configuration** | Configurable by tenant admin, gated by subscription plan | LLM Settings in tenant Admin Console; available providers depend on active plan |
+| **LLM configuration** | Tenant supplies their own LLM API key; simple wizard-style connection in tenant Admin Console | Plan gates which provider integrations are available; tenant pays LLM costs directly to the provider |
 | **Subscription model** | Each tenant subscribes to a plan; plans configured by Platform Admin | Subscription plans enforced at API level; Platform Admin panel manages plan definitions |
 
 ---
@@ -155,37 +155,37 @@ We are **not** using Supabase. All services are self-owned and self-managed:
 | SQL generation — LLM converts query intent to SQL → executes → returns structured result + citations | 2 days | 5 days |
 | **Multi-provider LLM router** — route to whichever provider the tenant has configured | 2 days | 4 days |
 | **LLM provider integrations:** Anthropic Claude, OpenAI GPT-4o, Google Gemini, Ollama (self-hosted) | 2 days | 5 days |
-| **LLM Config UI** (Admin Console) — add API key, select model, test connection, set as default | 1 day | 2 days |
+| **LLM Connect wizard** (Admin Console) — provider selector with logos → paste API key (masked) → model selector → instant test connection (real call) → save as default. Multi-provider: tenant can connect OpenAI + Anthropic + Gemini simultaneously and switch per-session | 1 day | 2 days |
+| **LLM usage logging** — log every API call in tenant schema (`llm_usage_logs`: timestamp, user_id, provider, model, input_tokens, output_tokens, cost_estimate_usd, query_type). Foundation for tenant usage dashboard | 0.5 day | 1 day |
 | Prompt engineering — query decomposition, citation extraction, confidence scoring | 3 days | 7 days |
 | Server-Sent Events streaming — AI response streams to existing chat UI in real time | 1 day | 2 days |
 | AI Executive Summary generator — scheduled nightly per tenant, stored in DB | 1 day | 3 days |
 | Insight + Recommendation auto-generation (LLM analysis + threshold rule engine) | 2 days | 5 days |
 
-**Phase total:** ~18.5 days AI · ~46 days traditional
+**Phase total:** ~19 days AI · ~47 days traditional
 
 **Subscription-gated LLM model:**
 
-Each tenant's subscription plan controls which LLM providers are available to their admins:
+Each tenant's subscription plan controls which LLM provider integrations are available and the platform feature limits. **Tenants supply their own API keys and pay LLM costs directly to the provider** — DecisionOS does not intermediate or mark up LLM costs.
 
-| Plan | Price/month | Users | Data Sources | AI Queries/mo | Allowed LLM Providers |
-|---|---|---|---|---|---|
-| **Trial** | $0 | 3 | 1 | 50 | GPT-4o-mini only |
-| **Starter** | $199 | 10 | 3 | 300 | GPT-4o + Claude Haiku |
-| **Professional** | $599 | 25 | 6 | 1,500 | Claude Sonnet + GPT-4o + Gemini Pro |
-| **Enterprise** | $1,199 | Unlimited | Unlimited | Unlimited | All providers + custom models |
+| Plan | Price/month | Users | Data Sources | Supported LLM Providers |
+|---|---|---|---|---|
+| **Trial** | $0 | 3 | 1 | OpenAI (GPT-4o-mini) |
+| **Starter** | $199 | 10 | 3 | OpenAI (GPT-4o) + Anthropic (Claude Haiku) |
+| **Professional** | $599 | 25 | 6 | OpenAI + Anthropic (Claude Sonnet) + Google Gemini Pro |
+| **Enterprise** | $1,199 | Unlimited | Unlimited | All providers + Ollama (self-hosted) + custom model endpoints |
 
 **How it works:**
-- Platform Admin defines plans and their allowed providers in the Platform Admin panel
-- Tenant Admin subscribes to a plan (or Platform Admin assigns it)
-- Tenant Admin Console → LLM Settings shows only the providers their plan allows
-- API enforces plan limits: query count, user count, data source count checked on every request
+- Tenant Admin Console → LLM Settings shows only the providers their plan supports
+- Tenant pastes their own API key for each provider they want to use → test connection → save
+- Tenant can connect multiple providers simultaneously and switch per-session or set a default
+- API enforces plan limits: **user count and data source count** only (no query cap — tenant controls their own LLM spend)
 - Platform Admin can change a tenant's plan at any time (instant effect)
 - New provider = add adapter class (~1 day) + Platform Admin adds it to relevant plans
 
 **Platform Admin plan management:**
 - Create / edit / archive plans from Platform Admin → Settings → Subscription Plans
-- Configure per plan: price, limits, allowed LLM providers (multi-select), feature flags
-- View per-tenant plan + usage from Platform Admin → Tenants → [tenant] → Subscription tab
+- Configure per plan: price, user limit, data source limit, supported LLM providers (multi-select), feature flags
 
 ---
 
@@ -200,11 +200,11 @@ Each tenant's subscription plan controls which LLM providers are available to th
 | Real dashboard charts (live data → Recharts via API) | 1 day | 2 days |
 | Notification system (SSE endpoint → existing notification bell) | 1 day | 2 days |
 | Workflow / task CRUD persistence | 1 day | 2 days |
-| **Subscription enforcement middleware** — check plan limits (queries, users, data sources) on every relevant API route; return 402 with upgrade prompt when limit hit | 1.5 days | 4 days |
-| **Tenant Admin Console** — LLM Settings tab shows only plan-allowed providers; plan usage meters (queries used vs limit); upgrade CTA | 1 day | 2 days |
-| **Platform Admin panel** — plan management (CRUD), per-tenant plan assignment, usage dashboard across all tenants | 1 day | 3 days |
+| **Subscription enforcement middleware** — check plan limits (user count, data source count) on every relevant API route; return 402 with upgrade prompt when limit hit. Query count no longer enforced — tenant controls their own LLM spend | 1 day | 3 days |
+| **Tenant Admin Console — LLM Settings + Usage** — provider connect wizard (plan-gated), usage dashboard: token consumption, estimated cost (input+output tokens × provider pricing), daily query chart, per-user breakdown, CSV export for billing reconciliation | 1 day | 2 days |
+| **Platform Admin panel** — plan management (CRUD: price, limits, supported providers), per-tenant plan assignment. No cross-tenant LLM usage tracking needed | 0.5 day | 1 day |
 
-**Phase total:** ~10.5 days AI · ~23 days traditional
+**Phase total:** ~9.5 days AI · ~21 days traditional
 
 ---
 
@@ -250,13 +250,13 @@ Each tenant's subscription plan controls which LLM providers are available to th
 | 1 — Backend Foundation (Postgres + Auth.js + schema-per-tenant) | 7.5 days | 20 days |
 | 2 — File Ingestion (R2 + parser) | 6.5 days | 15 days |
 | 3 — Connectors (Zoho + Custom ERP + PostgreSQL) | 13 days | 28 days |
-| 4 — AI/LLM Engine (pgvector + RAG + multi-provider) | 18.5 days | 46 days |
-| 5 — Frontend Integration + Subscription Enforcement | 10.5 days | 23 days |
+| 4 — AI/LLM Engine (pgvector + RAG + multi-provider + usage logging) | 19 days | 47 days |
+| 5 — Frontend Integration + Subscription Enforcement | 9.5 days | 21 days |
 | 6 — Production Hardening | 5 days | 14 days |
 | 7 — QA & Deployment | 6.5 days | 15 days |
-| **TOTAL** | **~68 days (~14 weeks)** | **~161 days (~32 weeks)** |
+| **TOTAL** | **~67.5 days (~12–13 weeks)** | **~159 days (~32 weeks)** |
 
-> Subscription enforcement (plan limits + LLM gating + Platform Admin plan management) adds ~2.5 days to Phase 5.
+> Client confirmed tenants bring their own LLM API keys (2026-06-30). Query-count enforcement removed; tenant LLM usage dashboard added to Admin Console. Net: -0.5 days vs original estimate.
 > Post-launch: Stripe self-serve billing (~3 days), Google Sheets + Salesforce connectors (~5 days).
 
 **Parallelism brings wall-clock to ~12 weeks:** Phases 1+2 can run concurrently (file ingestion schema doesn't block auth schema). Phase 3 connector work can be split across parallel agents. Running overlapping phases with AI subagent streams saves ~6–8 days wall-clock, delivering in **~12 weeks**.
@@ -422,7 +422,7 @@ For MVP, plan assignment is manual (Platform Admin sets plan per tenant). For se
 | Can you share the Custom ERP API documentation (base URL, auth type, key endpoints)? | Needed to scope the ERP connector accurately; missing docs = 1–2 day risk buffer |
 | Which Zoho plan are you on? (Free = 100 API req/min; Professional+ = higher limits) | Determines sync frequency we can offer without hitting rate limits |
 | How many tenant organizations do you expect at launch? | We are using schema-per-tenant (confirmed). This informs connection pool sizing on Neon. |
-| Do tenants bring their own LLM API keys, or does DecisionOS hold one shared key? | Billing model decision — shared key = you absorb LLM cost; per-tenant keys = tenants pay directly |
+| ~~Do tenants bring their own LLM API keys, or does DecisionOS hold one shared key?~~ | **Answered (2026-06-30): Tenants bring their own keys and pay the LLM provider directly.** |
 
 ---
 
