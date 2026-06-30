@@ -74,7 +74,7 @@ We are **not** using Supabase. All services are self-owned and self-managed:
 
 | Task | AI Estimate | Traditional |
 |---|---|---|
-| PostgreSQL schema design (tenants, users, sessions, data_sources, kpis, insights, recommendations, tasks, audit_logs, llm_configs) | 2 days | 4 days |
+| PostgreSQL schema design — identity & access (`organizations`, `users`, `roles`), data (`data_sources`, `datasets`), BI (`kpis`, `dashboards`), **AI/chat** (`chat_sessions`, `chat_messages`, `llm_requests`, `llm_responses`, `embeddings`), decision intelligence (`insights`, `recommendations`), workflow (`tasks`, `notifications`), governance (`audit_logs`) | 2 days | 4 days |
 | Neon/Railway Postgres setup + migrations (Drizzle ORM) | 0.5 day | 2 days |
 | **Auth.js v5** — Credentials provider, bcrypt password hashing, JWT sessions | 1 day | 4 days |
 | Session middleware (JWT validation on every API route) | 0.5 day | 2 days |
@@ -157,12 +157,13 @@ We are **not** using Supabase. All services are self-owned and self-managed:
 | **LLM provider integrations:** Anthropic Claude, OpenAI GPT-4o, Google Gemini, Ollama (self-hosted) | 2 days | 5 days |
 | **LLM Connect wizard** (Admin Console) — provider selector with logos → paste API key (masked) → model selector → instant test connection (real call) → save as default. Multi-provider: tenant can connect OpenAI + Anthropic + Gemini simultaneously and switch per-session | 1 day | 2 days |
 | **LLM usage logging** — log every API call in tenant schema (`llm_usage_logs`: timestamp, user_id, provider, model, input_tokens, output_tokens, cost_estimate_usd, query_type). Foundation for tenant usage dashboard | 0.5 day | 1 day |
-| Prompt engineering — query decomposition, citation extraction, confidence scoring | 3 days | 7 days |
-| Server-Sent Events streaming — AI response streams to existing chat UI in real time | 1 day | 2 days |
+| **Multi-agent orchestration pipeline** — 7-agent chain per query: Intent Agent (classifies into 10 query types) → Governance Agent (RBAC check, PII field masking in LLM context) → Data Analyst Agent (SQL gen + RAG) → BI Agent (chart/table spec) → Insight Agent → Recommendation Agent → Workflow Agent (task creation on confirm). Each agent uses Intent to route — strong model for analyst/insight/rec, fast model for intent/governance/bi/workflow | 4 days | 9 days |
+| **Chat session persistence** — `chat_sessions` + `chat_messages` CRUD API (`/chat/sessions`, `/chat/sessions/:id/messages`); session list → sidebar; message history with pagination; session title auto-generated from first query | 1 day | 2 days |
+| Server-Sent Events streaming — AI response streams token-by-token to existing chat UI; delta updates appended to `chat_messages` on completion | 1 day | 2 days |
 | AI Executive Summary generator — scheduled nightly per tenant, stored in DB | 1 day | 3 days |
 | Insight + Recommendation auto-generation (LLM analysis + threshold rule engine) | 2 days | 5 days |
 
-**Phase total:** ~19 days AI · ~47 days traditional
+**Phase total:** ~21 days AI · ~51 days traditional
 
 **Subscription-gated LLM model:**
 
@@ -250,13 +251,13 @@ Each tenant's subscription plan controls which LLM provider integrations are ava
 | 1 — Backend Foundation (Postgres + Auth.js + schema-per-tenant) | 7.5 days | 20 days |
 | 2 — File Ingestion (R2 + parser) | 6.5 days | 15 days |
 | 3 — Connectors (Zoho + Custom ERP + PostgreSQL) | 13 days | 28 days |
-| 4 — AI/LLM Engine (pgvector + RAG + multi-provider + usage logging) | 19 days | 47 days |
+| 4 — AI/LLM Engine (pgvector + RAG + 7-agent orchestration + chat sessions + usage logging) | 21 days | 51 days |
 | 5 — Frontend Integration + Subscription Enforcement | 9.5 days | 21 days |
 | 6 — Production Hardening | 5 days | 14 days |
 | 7 — QA & Deployment | 6.5 days | 15 days |
-| **TOTAL** | **~67.5 days (~12–13 weeks)** | **~159 days (~32 weeks)** |
+| **TOTAL** | **~69.5 days (~13–14 weeks)** | **~163 days (~33 weeks)** |
 
-> Client confirmed tenants bring their own LLM API keys (2026-06-30). Query-count enforcement removed; tenant LLM usage dashboard added to Admin Console. Net: -0.5 days vs original estimate.
+> Client confirmed tenants bring their own LLM API keys (2026-06-30). Phase 4 expanded to explicitly cover 7-agent orchestration pipeline and chat session persistence — both were implied in design spec but not itemised. Wall-clock stays ~12 weeks with phase parallelism.
 > Post-launch: Stripe self-serve billing (~3 days), Google Sheets + Salesforce connectors (~5 days).
 
 **Parallelism brings wall-clock to ~12 weeks:** Phases 1+2 can run concurrently (file ingestion schema doesn't block auth schema). Phase 3 connector work can be split across parallel agents. Running overlapping phases with AI subagent streams saves ~6–8 days wall-clock, delivering in **~12 weeks**.
