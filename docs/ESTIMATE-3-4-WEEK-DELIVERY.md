@@ -169,8 +169,6 @@ This is the same scope as the main estimate. No features deferred. All launch it
 
 **Post-launch only (not in 3–4 week scope):**
 - Stripe self-serve billing (~3 days)
-- Google Sheets connector (~2 days)
-- Salesforce connector (~3 days)
 - Ollama (self-hosted LLM) integration (~1 day)
 
 ---
@@ -243,7 +241,7 @@ All services provisioned and running by **end of Week 1** (Stream D). CI/CD depl
 | **Scope** | Core + Zoho + CSV + AI + Admin (ERP + E2E + auto-insights deferred) | Everything in ESTIMATE.md |
 | **Parallel streams** | 5 streams at peak | 4–5 streams at peak |
 | **End state** | Production URL, core value prop working, client can demo | Production URL, all connectors, full test suite, security audit |
-| **Post-launch work** | ~9 days (ERP + E2E + auto-insights + Stripe) | ~8 days (Stripe + Google Sheets + Salesforce) |
+| **Post-launch work** | ~6 days (ERP + E2E + auto-insights + Stripe) | ~4 days (Stripe + Ollama) |
 | **Infrastructure** | Client's server (Docker + Nginx + Postgres + Redis + local disk) | Same |
 | **Traditional equivalent** | ~15–18 weeks | ~33 weeks |
 | **AI speed advantage** | ~5x faster | ~8x faster |

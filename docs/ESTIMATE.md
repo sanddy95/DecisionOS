@@ -126,13 +126,10 @@ We are **not** using Supabase. All services are self-owned and self-managed:
 | **Zoho CRM** | OAuth 2.0 (Zoho Accounts Server), REST API v7, Contacts/Deals/Accounts/Activities sync, delta sync via `Modified_Time`, field mapping UI | 4 days | 8 days | **Launch** |
 | **Custom ERP** | Generic REST adapter (configurable base URL, auth header, endpoint mapping), webhook receiver for push events, field mapper UI, manual sync trigger | 4 days | 9 days | **Launch** |
 | **PostgreSQL direct** | Connection config UI, pg test, table/column browser, scheduled SELECT pull | 2 days | 4 days | **Launch** |
-| **Google Sheets** | OAuth 2.0 (Google Cloud), Sheets API v4, range polling, revision-based change detection | 2 days | 4 days | Post-launch |
-| **Salesforce** | OAuth 2.0 PKCE, SOQL queries, Contacts/Opportunities sync | 3 days | 7 days | Post-launch |
 | **Sync scheduler** | pg-boss job queue, cron per source, retry + exponential backoff, sync status in DB | 2 days | 5 days | **Launch** |
 | **Connector UI wiring** | Connect button → real OAuth redirect → callback → encrypted credential storage | 1 day | 2 days | **Launch** |
 
 **Launch connectors total:** ~13 days AI · ~28 days traditional
-**Post-launch connectors:** ~5 days AI (added in a future sprint)
 
 **Custom ERP note:** Since the ERP is bespoke, we build a generic connector template with:
 - Configurable API base URL, auth type (API key / Bearer / Basic)
@@ -259,7 +256,7 @@ Each tenant's subscription plan controls which LLM provider integrations are ava
 | **TOTAL** | **~69.5 days (~13–14 weeks)** | **~163 days (~33 weeks)** |
 
 > Client confirmed tenants bring their own LLM API keys (2026-06-30). Phase 4 expanded to explicitly cover 7-agent orchestration pipeline and chat session persistence — both were implied in design spec but not itemised. Wall-clock stays ~12 weeks with phase parallelism.
-> Post-launch: Stripe self-serve billing (~3 days), Google Sheets + Salesforce connectors (~5 days).
+> Post-launch: Stripe self-serve billing (~3 days).
 
 **Parallelism brings wall-clock to ~12 weeks:** Phases 1+2 can run concurrently (file ingestion schema doesn't block auth schema). Phase 3 connector work can be split across parallel agents. Running overlapping phases with AI subagent streams saves ~6–8 days wall-clock, delivering in **~12 weeks**.
 
@@ -275,7 +272,6 @@ Each tenant's subscription plan controls which LLM provider integrations are ava
 
 **MVP cuts:**
 - Custom ERP connector deferred to sprint 2 (needs ERP API docs from client)
-- Google Sheets, Salesforce: post-launch
 - No Redis caching (direct LLM calls)
 - No Playwright E2E tests (manual QA only)
 - Gemini + Ollama LLM providers deferred (Claude + OpenAI at launch)
@@ -337,8 +333,6 @@ The tenant chooses which provider to use. Costs are billed directly to the tenan
 | **Zoho CRM** | Free | OAuth 2.0 via Zoho Accounts Server. Client registers a Zoho Server-based App (free). API calls free within Zoho plan limits. |
 | **Custom ERP** | Free | Client provides REST API base URL + auth credentials. No third-party cost — direct integration. |
 | **PostgreSQL direct** | Free | Client provides host/credentials. TCP connection. |
-| **Google Sheets** *(post-launch)* | Free | Google Cloud project, Sheets API v4. Free within 300 req/min. |
-| **Salesforce** *(post-launch)* | Free | Connected App in client's org. No per-API-call cost. |
 | **Total connector cost** | | **$0/month** — all connectors use client's own credentials |
 
 ---
