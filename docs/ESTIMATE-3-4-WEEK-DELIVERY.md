@@ -204,17 +204,21 @@ With these three cuts: **Week 3 = production deployment**. All core AI, auth, Zo
 
 ## Infrastructure Provisioned at Deployment
 
-| Service | Purpose | Plan at launch | Monthly cost |
-|---|---|---|---|
-| **Vercel** | Frontend + API Routes + preview deploys | Pro | $20 |
-| **Neon** | PostgreSQL + pgvector (schema-per-tenant) | Launch ($19) | $19 |
-| **Cloudflare R2** | File storage (CSV, Excel, ERP exports) | Pay-as-you-go | $0–5 |
-| **Upstash Redis** | Rate limiting + AI response cache | Pay-as-you-go | $0–10 |
-| **Sentry** | Error monitoring | Developer (free) | $0 |
-| **GitHub** | Source control + CI/CD | Free | $0 |
-| **Total** | | | **~$39–54/month** |
+All services run on the **client's on-premise server** — no monthly SaaS fees. External tooling is limited to GitHub and Sentry's free tier.
 
-All provisioned and configured by **end of Week 1** (Stream D), so Weeks 2–4 deploy to real infrastructure on every PR.
+| Service | Purpose | Hosting | Monthly cost |
+|---|---|---|---|
+| **Next.js app** | Frontend + API Routes | Client's server (Docker + Nginx) | $0 |
+| **PostgreSQL + pgvector** | DB, schema-per-tenant, vector search | Client's server (self-hosted) | $0 |
+| **Redis** | Rate limiting + AI response cache | Client's server (self-hosted) | $0 |
+| **Local disk** | File storage (CSV, Excel, ERP exports) | Client's server filesystem | $0 |
+| **Sentry** | Error monitoring | Sentry.io Developer (free tier) | $0 |
+| **GitHub** | Source control + CI/CD Actions | GitHub Free | $0 |
+| **Total** | | | **$0/month** |
+
+> Client pays only for their own server hardware/hosting — no additional SaaS charges from DecisionOS.
+
+All services provisioned and running by **end of Week 1** (Stream D). CI/CD deploys via SSH + Docker Compose on every merge to main.
 
 ---
 
@@ -224,8 +228,9 @@ All provisioned and configured by **end of Week 1** (Stream D), so Weeks 2–4 d
 |---|---|
 | **Claude Code (claude-sonnet-4-6)** | Primary implementer — all code written and reviewed by AI |
 | **Subagent-Driven Development (SDD)** | 4–5 parallel agent streams per week; fresh implementer + reviewer per task |
-| **GitHub Actions** | CI: type-check → lint → Vitest → Playwright on every PR |
-| **Vercel Preview Deploys** | Every PR gets a live preview URL for visual QA |
+| **GitHub Actions** | CI: type-check → lint → Vitest → Playwright on every merge |
+| **Docker + Docker Compose** | Containerised deployment — consistent dev/staging/prod environments |
+| **Nginx** | Reverse proxy, SSL termination (Let's Encrypt), static asset serving |
 | **Chrome MCP** | Visual verification after every UI-touching task |
 | **Drizzle ORM** | Type-safe SQL + zero-downtime migration on every deploy |
 
@@ -239,7 +244,7 @@ All provisioned and configured by **end of Week 1** (Stream D), so Weeks 2–4 d
 | **Parallel streams** | 5 streams at peak | 4–5 streams at peak |
 | **End state** | Production URL, core value prop working, client can demo | Production URL, all connectors, full test suite, security audit |
 | **Post-launch work** | ~9 days (ERP + E2E + auto-insights + Stripe) | ~8 days (Stripe + Google Sheets + Salesforce) |
-| **Infrastructure** | Vercel + Neon + R2 + Upstash — all live | Same |
+| **Infrastructure** | Client's server (Docker + Nginx + Postgres + Redis + local disk) | Same |
 | **Traditional equivalent** | ~15–18 weeks | ~33 weeks |
 | **AI speed advantage** | ~5x faster | ~8x faster |
 

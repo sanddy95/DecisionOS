@@ -25,14 +25,15 @@ We are **not** using Supabase. All services are self-owned and self-managed:
 
 | Layer | Choice | Reason |
 |---|---|---|
-| **Database** | PostgreSQL on **Neon** (serverless) or **Railway** — **schema-per-tenant** | Real Postgres, strong tenant isolation, easy offboarding, no `tenant_id` column pollution |
+| **Database** | **Self-hosted PostgreSQL** + pgvector on client's server — **schema-per-tenant** | Real Postgres, strong tenant isolation, no vendor lock-in, runs on client's own hardware |
 | **Auth** | **Auth.js v5** (NextAuth) — Credentials + bcrypt + JWT | Industry standard for Next.js, no third-party auth vendor |
-| **File Storage** | **Cloudflare R2** | S3-compatible, $0.015/GB, no egress fees |
+| **File Storage** | **Local disk** on client's server | No storage SaaS cost; files stored under `/data/uploads` on the server filesystem |
 | **Real-time** | **Server-Sent Events** (built into Next.js) | No extra service, sufficient for notifications + AI streaming |
-| **Vector search** | **pgvector** extension on same Postgres DB | No extra vendor, runs alongside app data |
-| **Background jobs** | **pg-boss** (Postgres-native queue) or **BullMQ on Railway** | Leverages existing Postgres, no Redis needed for jobs |
-| **Caching** | **Upstash Redis** | Query result cache, rate limiting |
-| **API** | **Next.js API Routes** (same monorepo) | No separate service needed, deploy with frontend |
+| **Vector search** | **pgvector** extension on same self-hosted Postgres DB | No extra vendor, runs alongside app data |
+| **Background jobs** | **pg-boss** (Postgres-native queue) | Leverages existing Postgres — no extra service needed |
+| **Caching** | **Self-hosted Redis** on client's server | Query result cache, rate limiting — no external SaaS |
+| **Hosting** | **Docker + Nginx** on client's on-premise server | Containerised deployment, Nginx handles SSL (Let's Encrypt) + reverse proxy |
+| **API** | **Next.js API Routes** (same monorepo) | No separate service needed, runs inside the Docker container |
 
 ---
 
@@ -44,8 +45,8 @@ We are **not** using Supabase. All services are self-owned and self-managed:
 | MVP (3-week sprint) | Backend + Zoho connector + LLM working end-to-end |
 | Traditional equivalent | ~26–28 weeks |
 | AI speed advantage | ~45–50% faster |
-| Monthly infra cost (launch) | ~$45–75/month |
-| Monthly infra cost (scale, 500+ users) | ~$200–500/month |
+| Monthly infra cost (launch) | **$0/month** (runs on client's own server) |
+| Monthly infra cost (scale, 500+ users) | **$0/month** (client scales their own server) |
 | One-time setup costs | ~$0 |
 | LLM API cost | Usage-based (estimated below) |
 
@@ -233,8 +234,8 @@ Each tenant's subscription plan controls which LLM provider integrations are ava
 | Unit + integration tests (Vitest — API routes, auth middleware, data ingestion) | 2 days | 5 days |
 | E2E tests (Playwright — login, upload CSV, Zoho connect, ask AI) | 2 days | 5 days |
 | GitHub Actions CI pipeline (type-check, lint, test, preview deploy on PR) | 1 day | 2 days |
-| Production environment setup (Vercel + Neon/Railway + Cloudflare R2) | 0.5 day | 1 day |
-| Custom domain, SSL (Vercel handles), env var management | 0.5 day | 1 day |
+| Production environment setup (Docker Compose + Nginx + self-hosted Postgres + Redis on client's server) | 0.5 day | 1 day |
+| Custom domain, SSL (Let's Encrypt via Certbot + Nginx), env var management | 0.5 day | 1 day |
 | DB migration strategy (Drizzle migrate on deploy, zero-downtime) | 0.5 day | 1 day |
 
 **Phase total:** ~6.5 days AI · ~15 days traditional
@@ -286,16 +287,20 @@ Each tenant's subscription plan controls which LLM provider integrations are ava
 
 ### Core Infrastructure
 
-| Service | Purpose | Plan | Monthly Cost |
+All services run on the **client's on-premise/dedicated server**. No SaaS hosting fees.
+
+| Service | Purpose | Hosting | Monthly Cost |
 |---|---|---|---|
-| **Vercel** | Frontend + API Routes hosting, preview deploys | Pro | $20 |
-| **Neon** (Postgres) | Primary DB + pgvector + pg-boss jobs | Free → Launch ($19) | $0–19 |
-| **Cloudflare R2** | File storage (CSV/Excel/ERP exports) | Pay-as-you-go | $0–5 |
-| **Upstash Redis** | API rate limiting + LLM response cache | Pay-as-you-go | $0–10 |
-| **Railway** | Background sync worker (if pg-boss hits Neon connection limits) | Starter | $0–10 |
-| **Sentry** | Error monitoring | Developer (free) | $0 |
-| **GitHub** | Source control + CI/CD Actions | Free | $0 |
-| **Total infra** | | | **$20–64/month** |
+| **Next.js app** | Frontend + API Routes | Docker container on client's server | $0 |
+| **PostgreSQL + pgvector** | Primary DB + vector search + pg-boss queue | Self-hosted on client's server | $0 |
+| **Redis** | API rate limiting + LLM response cache | Self-hosted on client's server | $0 |
+| **Nginx** | Reverse proxy, SSL termination (Let's Encrypt), static assets | Client's server | $0 |
+| **Local disk** | File storage — CSV, Excel, ERP exports | `/data/uploads` on client's server | $0 |
+| **Sentry** | Error monitoring | Sentry.io Developer (free tier) | $0 |
+| **GitHub** | Source control + CI/CD Actions (SSH deploy) | GitHub Free | $0 |
+| **Total infra** | | | **$0/month** |
+
+> Client pays only for their own server hardware/hosting. There are no additional monthly SaaS charges from DecisionOS.
 
 ---
 
@@ -365,12 +370,12 @@ For MVP, plan assignment is manual (Platform Admin sets plan per tenant). For se
 
 | Scale | Infra | LLM API* | Total/Month |
 |---|---|---|---|
-| Pilot (10 users) | $20–45 | $10–25 | **~$30–70** |
-| Early SaaS (50 users) | $45–65 | $50–100 | **~$95–165** |
-| Growth (200 users) | $65–100 | $180–350 | **~$245–450** |
-| Scale (500+ users) | $100–200 | $500–900 | **~$600–1,100** |
+| Pilot (10 users) | $0 | $10–25 | **~$10–25** |
+| Early SaaS (50 users) | $0 | $50–100 | **~$50–100** |
+| Growth (200 users) | $0 | $180–350 | **~$180–350** |
+| Scale (500+ users) | $0 | $500–900 | **~$500–900** |
 
-*LLM costs billed to tenant's own API key — can be passed through to client at cost or marked up.
+*LLM costs billed to tenant's own API key — can be passed through to client at cost or marked up. Infra = $0 as all services run on client's server.
 
 ---
 
@@ -380,10 +385,11 @@ For MVP, plan assignment is manual (Platform Admin sets plan per tenant). For se
 |---|---|
 | **Claude Code (claude-sonnet-4-6)** | Primary implementer + reviewer per phase |
 | **Subagent-Driven Development (SDD)** | Fresh implementer + reviewer per task — same methodology used for frontend |
-| **GitHub Actions** | CI: type-check, lint, Vitest, Playwright on every PR |
-| **Vercel Preview Deployments** | Every PR gets a live preview URL for visual QA |
+| **GitHub Actions** | CI: type-check, lint, Vitest, Playwright on every merge |
+| **Docker + Docker Compose** | Containerised deployment — consistent dev/staging/prod environments |
+| **Nginx** | Reverse proxy, SSL termination (Let's Encrypt), static asset caching |
 | **Chrome MCP** | Visual verification after each phase |
-| **Drizzle ORM** | Type-safe SQL, migration management |
+| **Drizzle ORM** | Type-safe SQL, migration management (runs on container start) |
 
 ---
 
@@ -422,9 +428,9 @@ For MVP, plan assignment is manual (Platform Admin sets plan per tenant). For se
 |---|---|
 | Can you share the Custom ERP API documentation (base URL, auth type, key endpoints)? | Needed to scope the ERP connector accurately; missing docs = 1–2 day risk buffer |
 | Which Zoho plan are you on? (Free = 100 API req/min; Professional+ = higher limits) | Determines sync frequency we can offer without hitting rate limits |
-| How many tenant organizations do you expect at launch? | We are using schema-per-tenant (confirmed). This informs connection pool sizing on Neon. |
+| How many tenant organizations do you expect at launch? | We are using schema-per-tenant (confirmed). This informs connection pool sizing on the self-hosted Postgres instance. |
 | ~~Do tenants bring their own LLM API keys, or does DecisionOS hold one shared key?~~ | **Answered (2026-06-30): Tenants bring their own keys and pay the LLM provider directly.** |
 
 ---
 
-*Estimate prepared using DecisionOS frontend prototype as the baseline. Stack: real PostgreSQL (Neon/Railway) + Auth.js v5 + Cloudflare R2. Connectors updated to Zoho CRM + Custom ERP per client confirmation. LLM multi-provider switcher added per client requirement.*
+*Estimate prepared using DecisionOS frontend prototype as the baseline. Stack: self-hosted PostgreSQL + Auth.js v5 + local file storage, deployed via Docker + Nginx on client's on-premise server. Connectors updated to Zoho CRM + Custom ERP per client confirmation. LLM multi-provider switcher added per client requirement; per-tenant API keys confirmed (2026-06-30). Infrastructure: $0/month (client's own server).*
